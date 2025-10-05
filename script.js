@@ -912,7 +912,9 @@ const contaminantsData = {
                     localStorage.setItem('nearest_station_aqi', String(Math.round(stationAqi)));
                     // also persist station name so Home can display it
                     try { if (best && best.station_id) localStorage.setItem('nearest_station_name', String(best.station_id)); } catch (e) {}
-                    document.dispatchEvent(new CustomEvent('aqi:changed', { detail: { aqi: Math.round(stationAqi), stationName: best && best.station_id ? best.station_id : null } }));
+                    // Persist the full station object so other pages can read pollutant values
+                    try { localStorage.setItem('nearest_station_data', JSON.stringify(best)); } catch(e) {}
+                    document.dispatchEvent(new CustomEvent('aqi:changed', { detail: { aqi: Math.round(stationAqi), stationName: best && best.station_id ? best.station_id : null, station: best } }));
                 }
             } catch (e) {}
             return best;
@@ -2019,6 +2021,61 @@ const contaminantsData = {
         initChatbotModule();
     }
   });
+   // Populate Home contaminant cards from nearest station data (if present)
+  function updateHomeContaminantCards() {
+      try {
+          const raw = localStorage.getItem('nearest_station_data');
+          let station = null;
+          if (raw) {
+              try { station = JSON.parse(raw); } catch(e) { station = null; }
+          }
+          // If no full station object, fall back to nearest_station_aqi and keep values as '--'
+          const cards = document.querySelectorAll('.contaminant-card[data-contaminant]');
+          cards.forEach(card => {
+              const key = card.getAttribute('data-contaminant');
+              const valueEl = card.querySelector('.card-info .value');
+              if (!valueEl) return;
+              if (station && station[key] != null && !isNaN(station[key])) {
+                  const rawVal = station[key];
+                  // format units: pm -> µg/m³, others -> ppb
+                  if (key === 'pm25' || key === 'pm10') {
+                      valueEl.innerHTML = `${Math.round(rawVal)} <small>µg/m³</small>`;
+                  } else {
+                      valueEl.innerHTML = `${Math.round(rawVal)} <small>ppb</small>`;
+                  }
+              } else {
+                  // preserve existing numeric value if present, otherwise show placeholder
+                  const fallbackAqi = localStorage.getItem('nearest_station_aqi');
+                  // leave pollutant card values alone if they already have non-placeholder text
+                  const currentText = valueEl.textContent && valueEl.textContent.trim();
+                  if (!currentText || currentText === '--' || currentText === '') {
+                      valueEl.innerHTML = `--`;
+                  }
+              }
+          });
+          // also update the home subtitle with station name if available
+          const locEl = document.getElementById('home-location-subtitle');
+          if (locEl) {
+              if (station && (station.station_id || station.name)) locEl.textContent = station.station_id || station.name;
+              else {
+                  const name = localStorage.getItem('nearest_station_name');
+                  if (name) locEl.textContent = name;
+              }
+          }
+      } catch (e) { console.warn('updateHomeContaminantCards failed', e); }
+  }
+
+  // Refresh when nearest station selection changes or when storage is modified by other pages
+  document.addEventListener('aqi:changed', () => setTimeout(updateHomeContaminantCards, 80));
+  window.addEventListener('storage', (ev) => {
+      if (!ev) return;
+      if (ev.key === 'nearest_station_data' || ev.key === 'nearest_station_aqi' || ev.key === 'nearest_station_name') {
+          setTimeout(updateHomeContaminantCards, 60);
+      }
+  });
+
+  // run once at load in case data is already present
+  try { updateHomeContaminantCards(); } catch(e) {}
 
   /* ===== PERSONALIZED RECOMMENDATIONS MODULE - BEGIN (copy/paste friendly) ===== */
   // ... [código de recomendaciones existente] ...
@@ -2053,6 +2110,7 @@ const contaminantsData = {
   
 
 })();
+
 
 
 
