@@ -30,6 +30,84 @@
     } catch (e) {
         console.warn('Feather Icons library not found.');
     }
+       
+
+          // --- Dynamic Daily Recommendations based on AQI ---
+          function getCurrentAQI() {
+              // Try to get AQI from the home gauge
+              const el = document.getElementById('aqi-numeric-display');
+              if (!el) return null;
+              const v = parseInt(el.textContent);
+              return isNaN(v) ? null : v;
+          }
+
+          function getRecommendationsByAQI(aqi) {
+              if (aqi == null) {
+                  return [
+                      { icon: 'wind', title: 'Ventilation', text: 'Open windows for short periods to improve indoor air quality.' },
+                      { icon: 'sun', title: 'Outdoor activity', text: 'Ideal for moderate activities. Enjoy the outdoors!' },
+                      { icon: 'shield', title: 'Sensitive groups', text: 'Consider reducing prolonged or intense outdoor exertion.' }
+                  ];
+              }
+              if (aqi <= 50) {
+                  return [
+                      { icon: 'wind', title: 'Excellent Air Quality', text: 'Enjoy outdoor activities freely. Little or no health risk.' },
+                      { icon: 'sun', title: 'Outdoor Activities', text: 'Perfect day for sports, walks, and spending time outside.' },
+                      { icon: 'smile', title: 'General Advice', text: 'No restrictions. Take advantage of the good air quality.' }
+                  ];
+              } else if (aqi <= 100) {
+                  return [
+                      { icon: 'wind', title: 'Moderate Air Quality', text: 'Air quality is acceptable. Sensitive individuals should limit prolonged outdoor exertion.' },
+                      { icon: 'sun', title: 'Outdoor Activities', text: 'You can go outside, but monitor symptoms if you are sensitive.' },
+                      { icon: 'shield', title: 'Sensitive Groups', text: 'Consider reducing intense or long outdoor activities.' }
+                  ];
+              } else if (aqi <= 150) {
+                  return [
+                      { icon: 'alert-circle', title: 'Unhealthy for Sensitive Groups', text: 'Children, elderly, and people with respiratory diseases should limit outdoor exertion.' },
+                      { icon: 'user', title: 'General Population', text: 'Most people will not be affected, but stay alert for symptoms.' },
+                      { icon: 'shield', title: 'Sensitive Groups', text: 'Avoid prolonged or intense outdoor activities.' }
+                  ];
+              } else if (aqi <= 200) {
+                  return [
+                      { icon: 'alert-triangle', title: 'Unhealthy Air Quality', text: 'Everyone may begin to experience health effects. Sensitive groups may have more serious effects.' },
+                      { icon: 'activity', title: 'Limit Outdoor Activity', text: 'Children, active adults, and those with respiratory diseases should avoid prolonged outdoor exertion.' },
+                      { icon: 'shield', title: 'General Advice', text: 'Others should limit outdoor activities.' }
+                  ];
+              } else if (aqi <= 300) {
+                  return [
+                      { icon: 'x-octagon', title: 'Very Unhealthy', text: 'Health alert: everyone is at increased risk. Avoid all outdoor physical activity.' },
+                      { icon: 'home', title: 'Stay Indoors', text: 'Sensitive groups should avoid any outdoor activity. Others should limit outdoor exertion.' },
+                      { icon: 'alert-circle', title: 'General Advice', text: 'Follow health warnings and stay updated.' }
+                  ];
+              } else {
+                  return [
+                      { icon: 'x', title: 'Hazardous', text: 'Emergency conditions. The entire population is likely to be affected.' },
+                      { icon: 'home', title: 'Stay Indoors', text: 'Avoid any outdoor physical activity. Follow emergency instructions.' },
+                      { icon: 'alert-octagon', title: 'Health Warning', text: 'Everyone should avoid all outdoor exertion.' }
+                  ];
+              }
+          }
+
+          function renderDailyRecommendations() {
+              const aqi = getCurrentAQI();
+              const recs = getRecommendationsByAQI(aqi);
+              const list = document.getElementById('daily-recommendations-list');
+              if (!list) return;
+              list.innerHTML = '';
+              recs.forEach(rec => {
+                  const li = document.createElement('li');
+                  li.innerHTML = `<i data-feather="${rec.icon}"></i><span><strong>${rec.title}:</strong> ${rec.text}</span>`;
+                  list.appendChild(li);
+              });
+              if (window.feather) feather.replace();
+          }
+
+          // Initial render and update on AQI change
+          renderDailyRecommendations();
+          // Listen for AQI changes
+          document.addEventListener('aqi:changed', renderDailyRecommendations);
+          // Optionally, poll for AQI changes if needed
+          setInterval(renderDailyRecommendations, 30000); // update every 30s
   });
 
   // SEGUNDO INICIALIZADOR PARA LÓGICA DE PERFIL, MAPA Y RECOMENDACIONES
@@ -1796,3 +1874,4 @@
   
 
 })();
+
