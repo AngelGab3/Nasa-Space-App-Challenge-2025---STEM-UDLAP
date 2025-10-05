@@ -1281,11 +1281,16 @@
     const cancelRegister = document.getElementById('cancel-register');
     const registerForm = document.getElementById('register-form');
     const PROFILE_KEY = 'aeris_profile_v1';
-    
+    const HEALTH_KEY = 'aeris_health_v1';
+     
     // --- Lógica de Edición ---
     const toggleEdit = (input, isEditing) => {
         if(!input) return;
+        // update both property and attribute so CSS selectors and queries reflect the change
+        try {
         input.readOnly = !isEditing;
+           if (isEditing) input.removeAttribute('readonly'); else input.setAttribute('readonly', '');
+        } catch (e) {}
         const icon = input.parentElement.querySelector('.edit-icon');
         if (isEditing) {
             input.focus();
@@ -1315,10 +1320,22 @@
                     if(saveButton) saveButton.classList.remove('hidden');
                 } else {
                     toggleEdit(input, false);
-                    if (!document.querySelector('.profile-form input[readonly="false"]') && saveButton) {
+                                        // if there are no inputs currently editable, hide save button
+                    if (!document.querySelector('.profile-form input:not([readonly])') && saveButton) {
                         saveButton.classList.add('hidden');
                     }
                     console.log(`Guardando cambio para ${fieldId}: ${input.value}`);
+                   // Persist single-field change into stored profile
+                    try {
+                        const existing = loadProfile() || {};
+                        // map input ids to stored keys
+                        if (fieldId === 'name') existing.fullName = input.value;
+                        else if (fieldId === 'email') existing.email = input.value;
+                        else if (fieldId === 'location') existing.state = input.value;
+                        saveProfile(existing);
+                        refreshProfileState();
+                        try { document.dispatchEvent(new Event('profile:changed')); } catch(e){}
+                    } catch(e){}
                 }
             });
         });
@@ -1327,16 +1344,29 @@
     if (saveButton) {
         saveButton.addEventListener('click', (e) => {
             e.preventDefault();
-            document.querySelectorAll('.profile-form input:not([readonly])').forEach(input => {
-                toggleEdit(input, false);
-                console.log(`Guardado masivo para ${input.id}: ${input.value}`);
-            });
+          // collect visible profile fields and persist
+            const pf = {
+                fullName: (document.getElementById('name') && document.getElementById('name').value) || '',
+                email: (document.getElementById('email') && document.getElementById('email').value) || '',
+                state: (document.getElementById('location') && document.getElementById('location').value) || ''
+            };
+            saveProfile(pf);
+            // mark inputs readOnly and hide save button
+            document.querySelectorAll('.profile-form input').forEach(input => { try { toggleEdit(input, false); } catch(e){} });
             saveButton.classList.add('hidden');
+            refreshProfileState();
+            try { document.dispatchEvent(new Event('profile:changed')); } catch(e){}
         });
     }
 
     // --- Lógica de Registro y LocalStorage ---
-    const usStates = ['Alabama','Alaska', /* ... y otros estados ... */ ,'Wyoming'];
+    const usStates = [
+        'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','District of Columbia','Florida','Georgia',
+        'Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota',
+        'Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota',
+        'Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia',
+        'Washington','West Virginia','Wisconsin','Wyoming'
+    ];
     const stateSelect = document.getElementById('reg-state');
     if (stateSelect) {
         usStates.forEach(s => {
@@ -1349,10 +1379,18 @@
     
     function saveProfile(data) {
         localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+       function saveHealth(data) {
+        localStorage.setItem(HEALTH_KEY, JSON.stringify(data));
+
     }
 
     function loadProfile() {
         const raw = localStorage.getItem(PROFILE_KEY);
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+       function loadHealth() {
+        const raw = localStorage.getItem(HEALTH_KEY);
         if (!raw) return null;
         try { return JSON.parse(raw); } catch (e) { return null; }
     }
@@ -1365,6 +1403,15 @@
                 $('#reg-name').value = profile.fullName || '';
                 $('#reg-email').value = profile.email || '';
                 // ... rellenar otros campos
+               try { $('#reg-state').value = profile.state || ''; } catch(e){}
+            }
+            const health = loadHealth();
+            if (health) {
+                try { $('#reg-resp').value = health.respCondition || ''; } catch(e){}
+                try { $('#reg-activity').value = health.activityLevel || ''; } catch(e){}
+                try { $('#reg-outdoor').value = health.outdoorTime || ''; } catch(e){}
+                try { $('#reg-preftime').value = health.prefTime || ''; } catch(e){}
+                try { $('#reg-sens').value = health.sensitivity || ''; } catch(e){}
             }
         } else {
             if (registerForm) registerForm.reset();
@@ -1397,12 +1444,27 @@
                 prefTime: $('#reg-preftime').value,
                 sensitivity: $('#reg-sens').value
             };
-            saveProfile(data);
+           // Split: save profile account info and health info separately
+            const profileAccount = { fullName: data.fullName, email: data.email, state: data.state };
+            const healthData = { respCondition: data.respCondition, activityLevel: data.activityLevel, outdoorTime: data.outdoorTime, prefTime: data.prefTime, sensitivity: data.sensitivity };
+            saveProfile(profileAccount);
+            saveHealth(healthData);
             refreshProfileState();
             closeModal();
         });
     }
-    
+    // Prevent Enter key inside modal inputs from submitting the form unexpectedly
+    if (registerModal) {
+        registerModal.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                const active = document.activeElement;
+                // allow Enter only if focus is on a button inside the modal (like Save)
+                if (active && active.tagName && active.tagName.toLowerCase() === 'button') return;
+                // otherwise prevent default to avoid accidental submit
+                ev.preventDefault();
+            }
+        });
+    }
     function refreshProfileState() {
         const profile = loadProfile();
         const prompt = $('#register-prompt');
@@ -1411,18 +1473,92 @@
             $('#name').value = profile.fullName || 'JuanPerez';
             $('#email').value = profile.email || 'juan.perez@aeris.com';
             $('#location').value = profile.state || 'Ciudad de México';
-            $('#sensitive-status').textContent = `Sí (${profile.respCondition || 'Asma'})`;
+            const sensitiveEl = $('#sensitive-status');
+            if (sensitiveEl) sensitiveEl.textContent = `Sí (${(health && health.respCondition) ? health.respCondition : (profile.respCondition || 'Asma')})`;
+            // populate health summary values if present
+            if (health) {
+                try { document.getElementById('health-resp').textContent = health.respCondition || '--'; } catch(e){}
+                try { document.getElementById('health-activity').textContent = health.activityLevel || '--'; } catch(e){}
+                try { document.getElementById('health-outdoor').textContent = health.outdoorTime || '--'; } catch(e){}
+                try { document.getElementById('health-preftime').textContent = health.prefTime || '--'; } catch(e){}
+                try { document.getElementById('health-sens').textContent = health.sensitivity || '--'; } catch(e){}
+            } else {
+                try { document.getElementById('health-resp').textContent = '--'; } catch(e){}
+                try { document.getElementById('health-activity').textContent = '--'; } catch(e){}
+                try { document.getElementById('health-outdoor').textContent = '--'; } catch(e){}
+                try { document.getElementById('health-preftime').textContent = '--'; } catch(e){}
+                try { document.getElementById('health-sens').textContent = '--'; } catch(e){}
+            }
         } else {
             if(prompt) prompt.style.display = 'block';
             $('#name').value = '';
             $('#email').value = '';
             $('#location').value = '';
-            $('#sensitive-status').textContent = 'No registrado';
+           const sensitiveEl2 = $('#sensitive-status');
+            if (sensitiveEl2) sensitiveEl2.textContent = 'No registrado';
         }
     }
 
     refreshProfileState();
-  }
+       // Wire 'Edit details' in Health to open the full register modal (same form used for profile edit)
+    const editInlineBtn = document.getElementById('edit-inline-btn');
+    if (editInlineBtn) {
+        editInlineBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // open modal prefilled with existing data
+            openRegisterModal(true);
+        });
+    }
+
+    // Inline health form removed from DOM — use modal ('Edit details') to edit health
+
+    // Wire 'Edit in modal' buttons to open register modal with prefill
+    $$('.edit-data-account').forEach(btn => btn.addEventListener('click', (ev) => { ev.preventDefault(); openRegisterModal(true); }));
+
+    // Delegated fallback: if for some reason direct listeners didn't attach or dynamic
+    // elements were added later, handle clicks at the document level and open modal
+    // when targets match our edit selectors. This prevents the modal failing to open
+    // in some runtime timing environments.
+    document.addEventListener('click', function delegatedEditHandler(ev) {
+        const t = ev.target;
+        if (!(t instanceof Element)) return;
+        // If modal is already open, ignore delegated edit clicks to avoid re-entrancy
+        try {
+            if (registerModal && registerModal.classList && registerModal.classList.contains('visible')) return;
+        } catch (e) {}
+        // If the click was already handled by direct listener avoid double open
+        if (t.dataset && t.dataset._handledRegister) return;
+        // Use closest so clicks on inner elements (icons/spans) are captured
+        const match = t.closest('.edit-icon, .edit-data-account, #edit-inline-btn, #profile-edit-btn');
+        if (match) {
+            try { ev.preventDefault(); } catch(e){}
+            openRegisterModal(true);
+        }
+    });
+
+    // Direct listener for the simplified profile Edit button
+    const profileEditBtn = document.getElementById('profile-edit-btn');
+    if (profileEditBtn) {
+        profileEditBtn.addEventListener('click', (e) => { e.preventDefault(); openRegisterModal(true); });
+    }
+
+    // Sign out behavior: clears stored profile & health and resets UI
+    const signoutBtn = document.getElementById('signout-btn');
+    if (signoutBtn) {
+        signoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            try { localStorage.removeItem(PROFILE_KEY); localStorage.removeItem(HEALTH_KEY); } catch(e){}
+            // Also clear any chatbot aqi or related items used by recs
+            try { localStorage.removeItem('chatbot_aqi_value'); localStorage.removeItem('nearest_station_aqi'); localStorage.removeItem('nearest_station_name'); } catch(e){}
+            // Reset UI
+            refreshProfileState();
+            // Show register prompt again
+            const prompt = document.getElementById('register-prompt'); if (prompt) prompt.style.display = 'block';
+            // Notify other modules
+            try { document.dispatchEvent(new Event('profile:signedout')); } catch(e){}
+        });
+    }
+}     
 
   /* ===== PERSONALIZED RECOMMENDATIONS MODULE - BEGIN (copy/paste friendly) ===== */
 (function(){
@@ -1590,6 +1726,9 @@
 
         // Also refresh on load
         setTimeout(refreshRecommendationsUI, 180);
+       // Refresh when profile changes or user signs out
+        document.addEventListener('profile:changed', () => setTimeout(refreshRecommendationsUI, 120));
+        document.addEventListener('profile:signedout', () => setTimeout(refreshRecommendationsUI, 120));
     });
     /**
    * MÓDULO: Asistente Virtual (Chatbot) - Adaptado del sketch de React
@@ -1874,4 +2013,5 @@
   
 
 })();
+
 
