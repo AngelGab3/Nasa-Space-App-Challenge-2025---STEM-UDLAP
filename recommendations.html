@@ -69,20 +69,58 @@
       </div>
       <!-- END PERSONALIZED RECOMMENDATIONS -->
 
-      <div class="dashboard-card chatbot-card">
-        <h3 class="panel-title chatbot-header">Virtual Assistant <i class="fas fa-robot"></i></h3>
-        <div class="chat-window" id="chat-window">
-          <div class="message bot-message">
-            <p>Hello JuanPerez, how can I help you today with your environmental health?</p>
+    <div class="dashboard-card chatbot-card">
+        <h3 class="panel-title chatbot-header" id="chat-title">AQI Assistant <i class="fas fa-robot"></i></h3>
+
+        <div id="aqi-dual-display" style="display:none; margin-bottom: 20px;">
+          <div class="aqi-display-grid">
+              <div id="aqi-actual-card" class="aqi-card">
+                  <p class="aqi-label">AQI TODAY</p>
+                  <div id="aqi-actual-value" class="aqi-value">--</div>
+                  <div id="aqi-actual-category" class="aqi-category">--</div>
+              </div>
+              <div id="aqi-forecast-card" class="aqi-card">
+                  <p class="aqi-label">AQI FORECAST</p>
+                  <div id="aqi-forecast-value" class="aqi-value">--</div>
+                  <div id="aqi-forecast-category" class="aqi-category">--</div>
+              </div>
           </div>
+          <p id="dominant-pollutant" class="dominant-pollutant-text">Dominant Pollutant: <span style="font-weight: 600;">--</span></p>
         </div>
-        <div class="chat-input-area">
-          <input type="text" id="chat-input" placeholder="Write your question..." maxlength="150">
-          <button id="send-btn" class="action-button-solid">
+
+        <div id="chat-status-area">
+            </div>
+
+        <div class="chat-window" id="chat-window" style="display:none;">
+          </div>
+
+        <form id="chat-input-form" class="chat-input-area" style="display:none;">
+          <input type="text" id="chat-input" placeholder="Write your question or comment..." maxlength="150" autocomplete="off">
+          <button type="submit" id="send-btn" class="action-button-solid" disabled>
             <i class="fas fa-paper-plane"></i>
           </button>
-        </div>
+        </form>
       </div>
+
+      <style>
+        /* Estilos CSS mínimos para el nuevo display dual */
+        .aqi-display-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; }
+        .aqi-card { padding: 12px; border-radius: 8px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .aqi-label { font-size: 0.75rem; font-weight: 700; opacity: 0.9; }
+        .aqi-value { font-size: 2rem; font-weight: 800; margin-top: 4px; }
+        .aqi-category { font-size: 0.9rem; font-weight: 500; }
+        .dominant-pollutant-text { margin-top: 8px; font-size: 0.9rem; text-align: center; color: var(--color-muted); }
+        /* Clases de color (se poblarán por JS, pero usamos las variables globales de AQI) */
+        .aqi-color-good { background: var(--aqi-good); }
+        .aqi-color-moderate { background: var(--aqi-moderate); }
+        .aqi-color-sensitive { background: var(--aqi-unhealthy-sensitive); }
+        .aqi-color-unhealthy { background: var(--aqi-unhealthy); }
+        .aqi-color-very-unhealthy { background: var(--aqi-very-unhealthy); }
+        .aqi-color-hazardous { background: var(--aqi-hazardous); }
+
+        .loader { border-top-color: var(--color-primary); border-width: 4px; border-style: solid; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      </style>  
     </section>
   </main>
 

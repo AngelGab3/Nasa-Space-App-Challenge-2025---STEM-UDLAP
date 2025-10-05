@@ -1498,8 +1498,284 @@
         // Also refresh on load
         setTimeout(refreshRecommendationsUI, 180);
     });
+    /**
+   * MÓDULO: Asistente Virtual (Chatbot) - Adaptado del sketch de React
+   */
+  function initChatbotModule() {
+    // ¡REEMPLAZA ESTO con la URL de tu Space!
+    const API_URL = "https://gabziag03-v4-nsac-2025.hf.space"; 
 
+    // Referencias a elementos del DOM
+    const chatWindow = $('#chat-window');
+    const chatInput = $('#chat-input');
+    const sendBtn = $('#send-btn');
+    const chatInputForm = $('#chat-input-form');
+    const aqiDisplay = $('#aqi-dual-display');
+    const statusArea = $('#chat-status-area');
+
+    if (!chatWindow || !chatInput || !sendBtn || !chatInputForm) return;
+
+    // Estado local
+    let chatHistory = [];
+    let aqiData = null;
+    let isLoading = false;
+    
+    // --- Lógica del Sketch de React (Adaptada) ---
+    
+    // Rangos y funciones para generación aleatoria
+    const FEATURE_RANGES = {
+        'lat': [19.884490, 62.141694], 'lon': [-156.877217, -69.036592], 'mes': [1, 12], 
+        'dia_semana': [0, 6], 'o3_lag1': [0.001000, 0.050000], 'o3_lag3': [0.001000, 0.050000],
+        'o3_lag7': [0.001000, 0.050000], 'pm25_lag1': [-0.150000, 24.509960],
+        'pm25_lag3': [-0.150000, 24.509960], 'pm25_lag7': [-0.150000, 24.509960],
+    };
+    const generateRandomValue = (min, max, isInteger = false) => {
+        const value = Math.random() * (max - min) + min;
+        return isInteger ? Math.floor(value) : parseFloat(value.toFixed(6)); 
+    };
+    const generateRandomFeatures = () => {
+        const newFeatures = {};
+        for (const key in FEATURE_RANGES) {
+            const [min, max] = FEATURE_RANGES[key];
+            const isInteger = key === 'mes' || key === 'dia_semana';
+            newFeatures[key] = generateRandomValue(min, max, isInteger);
+        }
+        return newFeatures;
+    };
+
+    // Función auxiliar para scroll
+    const scrollToBottom = () => {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    };
+    
+    // Mapeo de categorías a clases CSS para colores
+    const getAqiClass = (category) => {
+        if (!category) return 'bg-gray-400';
+        const lower = category.toLowerCase();
+        if (lower.includes('bueno') || lower.includes('good')) return 'aqi-color-good';
+        if (lower.includes('moderado') || lower.includes('moderate')) return 'aqi-color-moderate';
+        if (lower.includes('sensibles') || lower.includes('sensitive')) return 'aqi-color-sensitive';
+        if (lower.includes('insalubre') && !lower.includes('muy')) return 'aqi-color-unhealthy';
+        if (lower.includes('muy insalubre') || lower.includes('very unhealthy')) return 'aqi-color-very-unhealthy';
+        if (lower.includes('peligroso') || lower.includes('hazardous')) return 'aqi-color-hazardous';
+        return 'bg-gray-400';
+    };
+
+    // Renderizado del historial de chat, excluyendo mensajes internos
+    const renderChat = (history) => {
+        const SYSTEM_PROMPT_START = "Eres un asistente especializado en calidad del aire.";
+        const SYSTEM_ACK_TEXT = "Entendido. Estoy listo para asumir el rol.";
+        const GROUNDING_PROMPT_START = "El AQI Actual es";
+        
+        const displayHistory = history.filter(msg => {
+            const text = msg.parts[0]?.text?.trim() || ''; 
+            // Ocultar mensajes internos del sistema
+            if (msg.role === 'user' && text.includes(SYSTEM_PROMPT_START)) return false; 
+            if (msg.role === 'model' && text === SYSTEM_ACK_TEXT) return false; 
+            if (msg.role === 'user' && text.startsWith(GROUNDING_PROMPT_START)) return false;
+            return true;
+        });
+        
+        chatWindow.innerHTML = displayHistory.map(msg => {
+            const text = msg.parts[0].text;
+            const roleClass = msg.role === 'user' ? 'user-message' : 'bot-message';
+            const alignment = msg.role === 'user' ? 'justify-end' : 'justify-start';
+            return `<div class="message ${alignment}"><div class="${roleClass}"><p>${text}</p></div></div>`;
+        }).join('');
+        
+        scrollToBottom();
+    };
+
+    // Renderizado del AQI Dual
+    const renderAqiData = (data) => {
+        if (!data) return;
+        
+        aqiDisplay.style.display = 'block';
+
+        // AQI Actual
+        const actualCard = $('#aqi-actual-card');
+        actualCard.className = `aqi-card ${getAqiClass(data.actual.categoria)}`;
+        $('#aqi-actual-value').textContent = data.actual.aqi;
+        $('#aqi-actual-category').textContent = data.actual.categoria;
+        
+        // AQI Pronosticado
+        const forecastCard = $('#aqi-forecast-card');
+        forecastCard.className = `aqi-card ${getAqiClass(data.pronosticado.categoria)}`;
+        $('#aqi-forecast-value').textContent = data.pronosticado.aqi;
+        $('#aqi-forecast-category').textContent = data.pronosticado.categoria;
+        
+        // Contaminante dominante
+        $('#dominant-pollutant span').textContent = data.dominante;
+        
+        // Almacenar AQI actual en localStorage para el módulo de recomendaciones
+        try {
+            localStorage.setItem('chatbot_aqi_value', data.actual.aqi);
+            // Si el módulo de recomendaciones existe en esta página, forzar un refresh
+            const aqiEl = document.getElementById('current-aqi-value');
+            if (aqiEl) aqiEl.textContent = data.actual.aqi;
+        } catch(e) { /* ignore */ }
+    };
+
+    // Actualiza el estado de carga y UI
+    const updateLoadingState = (loading, errorText = '') => {
+        isLoading = loading;
+        sendBtn.disabled = loading || !chatInput.value.trim();
+        chatInput.placeholder = loading ? "Waiting for response..." : "Write your question or comment...";
+        chatInput.disabled = loading;
+        
+        statusArea.innerHTML = ''; // Limpiar errores
+        
+        if (loading) {
+            statusArea.innerHTML = `<div class="loader"></div><p style="text-align:center; color:#666;">Generating data and calculating forecast...</p>`;
+            chatInputForm.style.display = 'none';
+        } else {
+            chatInputForm.style.display = 'flex';
+            if (errorText) {
+                statusArea.innerHTML = `<div class="p-3 mb-4 text-sm text-red-700 bg-red-100 bg-opacity-70 rounded-lg" role="alert"><span style="font-weight: 600;">Error:</span> ${errorText} <button id="retry-btn" class="underline ml-2">Retry</button></div>`;
+                $('#retry-btn')?.addEventListener('click', handleInitialSubmit);
+                chatInputForm.style.display = 'none';
+            }
+        }
+
+        chatWindow.style.display = aqiData && !loading ? 'block' : 'none';
+    };
+
+    // Maneja el inicio de la conversación (Grounding)
+    const handleInitialSubmit = async () => {
+        aqiData = null;
+        chatHistory = [];
+        updateLoadingState(true);
+
+        const newRandomFeatures = generateRandomFeatures();
+        
+        try {
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ features: newRandomFeatures }) 
+            });
+            
+            if (!response.ok) { 
+                const errorData = await response.json(); 
+                throw new Error(errorData.error || `Unknown error: ${response.status}`); 
+            }
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            aqiData = {
+                actual: { aqi: data.aqi_data.aqi_actual, categoria: data.aqi_data.categoria_actual },
+                pronosticado: { aqi: data.aqi_data.aqi_pronosticado, categoria: data.aqi_data.categoria_pronosticada },
+                dominante: data.aqi_data.dominante
+            };
+            chatHistory = data.history; 
+            
+            renderAqiData(aqiData);
+            renderChat(chatHistory);
+
+        } catch (err) {
+            console.error('Catch error:', err);
+            updateLoadingState(false, `Error starting conversation: ${err.message}`);
+            return; 
+        } finally {
+            updateLoadingState(false);
+        }
+    };
+
+    // Maneja la continuación de la conversación
+    const handleChatSubmit = async (e) => {
+        e.preventDefault();
+        const userInput = chatInput.value.trim();
+        if (!userInput || isLoading) return;
+        
+        const userMsgPayload = userInput;
+        
+        // Agregar mensaje de usuario temporal
+        const tempUserMsg = { role: 'user', parts: [{ text: userMsgPayload }] };
+        const tempHistory = [...chatHistory, tempUserMsg];
+        chatInput.value = "";
+        renderChat(tempHistory);
+        updateLoadingState(true);
+
+        try {
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    history: chatHistory, // Envía el historial anterior (sin el mensaje temporal)
+                    user_message: userMsgPayload 
+                })
+            });
+            
+            if (!response.ok) { 
+                const errorData = await response.json(); 
+                throw new Error(errorData.error || `Unknown error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            chatHistory = data.history; // Reemplazar con el historial completo y correcto
+            renderChat(chatHistory);
+
+        } catch (err) {
+            const errorMessage = `Error in conversation: ${err.message}`;
+            alert(errorMessage);
+            console.error(errorMessage);
+            // Si falla, restaurar historial original y agregar un mensaje de error visual
+            chatHistory = tempHistory; 
+            renderChat(chatHistory);
+        } finally {
+            updateLoadingState(false);
+        }
+    };
+
+    // Event Listeners
+    chatInputForm.addEventListener('submit', handleChatSubmit);
+    chatInput.addEventListener('input', () => {
+        sendBtn.disabled = isLoading || !chatInput.value.trim();
+    });
+
+    // Inicialización: Llamar handleInitialSubmit al cargar el módulo
+    handleInitialSubmit();
+  }
+  
+  // Agregar la llamada al inicializador principal
+  document.addEventListener('DOMContentLoaded', () => {
+    // ... [código de inicialización existente] ...
+    if ($('.chatbot-card')) {
+        initChatbotModule();
+    }
+  });
+
+  /* ===== PERSONALIZED RECOMMENDATIONS MODULE - BEGIN (copy/paste friendly) ===== */
+  // ... [código de recomendaciones existente] ...
+  
+  // Modificación para que las recomendaciones lean el AQI del chatbot si existe.
+  (function(){
+      // ... [código existente] ...
+      function getCurrentAqi() {
+          const el = document.getElementById('current-aqi-value');
+          // NUEVO: Intentar leer de localStorage (chatbot) si el elemento no tiene valor
+          let v = null;
+          if (el) v = parseInt(el.textContent);
+          
+          if (isNaN(v) || v == null) {
+              try {
+                  const chatAqi = localStorage.getItem('chatbot_aqi_value');
+                  if (chatAqi && !isNaN(Number(chatAqi))) {
+                      v = Number(chatAqi);
+                      if (el) el.textContent = v; // Actualizar el elemento DOM si se encuentra
+                  }
+              } catch (e) {}
+          }
+          return isNaN(v) ? null : v;
+      }
+      // ... [código existente] ...
+  })();
+  /* ===== PERSONALIZED RECOMMENDATIONS MODULE - END ===== */
 })();
+
 /* ===== PERSONALIZED RECOMMENDATIONS MODULE - END ===== */
 
   
