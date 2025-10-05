@@ -425,13 +425,50 @@
     const carouselCards = document.querySelectorAll('.info-card');
     if (!modalOverlay || carouselCards.length === 0) return;
     
-    const modalData = {
-        'sabias-que-1': { title: 'Did you know...', content: `<p>Indoor air pollution can be up to <strong>5 times worse</strong> than outdoor air...</p>`},
-        'aqi': { title: 'What is the AQI?', content: `<p>The <strong>Air Quality Index (AQI)</strong> is a scale used to communicate how polluted the air is...</p>`},
-        'contaminantes': { title: 'Types of Pollutants', content: `<p>The main pollutants measured by AQI are...</p>`},
-        'sabias-que-2': { title: 'Did you know...', content: `<p>Trees and plants are excellent natural air filters...</p>`},
-        'como-mejorar': { title: 'How can you improve your health?', content: `<p>Our site offers personalized tools to help protect you...</p>`}
-    };
+   
+const contaminantsData = {
+    pm25: {
+        title: 'Particulate Matter (PM2.5)',
+        description: 'Microscopic particles less than 2.5 micrometers in diameter, about 1/30th the width of a human hair. Because they are so small and light, they can stay in the air for longer periods and can penetrate deep into the lungs and even enter the bloodstream.',
+        meaning: 'The WHO guideline for annual average exposure is 5 µg/m³. Any level above this increases the risk of respiratory and cardiovascular diseases. Consistent values above 12 µg/m³ are often considered unhealthy for sensitive groups.',
+        sources: 'Primarily from combustion sources like vehicle exhaust, power plants, industrial emissions, wildfires, and even indoor activities like cooking and burning candles.',
+        image: '2.5PM.jpg'
+    },
+    pm10: {
+        title: 'Particulate Matter (PM10)',
+        description: 'Inhalable coarse particles with a diameter between 2.5 and 10 micrometers. They are smaller than a strand of hair but larger than PM2.5. They can irritate the eyes, nose, and throat and can worsen conditions like asthma and bronchitis.',
+        meaning: 'The WHO considers an annual average of 15 µg/m³ to be the guideline limit. Short-term spikes above 50 µg/m³ can cause significant respiratory issues, especially for people with pre-existing conditions.',
+        sources: 'Generated from mechanical processes like road dust kicked up by vehicles, construction sites, landfills, and agriculture. Also includes natural sources like pollen and mold spores.',
+        image: '10PM.jpg'
+    },
+    co: {
+        title: 'Carbon Monoxide (CO)',
+        description: 'A colorless, odorless, and tasteless gas often called the "silent killer." It is highly toxic because it reduces the ability of blood to carry oxygen to the body\'s organs and tissues.',
+        meaning: 'Outdoor levels are typically low. The health standard is usually around 9 ppm (9,000 ppb) over 8 hours. Any sustained indoor concentration is a serious concern, as it points to faulty fuel-burning appliances.',
+        sources: 'Results from the incomplete combustion of carbon-containing fuels. Common sources include vehicle exhaust, industrial processes, and malfunctioning residential appliances like furnaces, water heaters, and stoves.',
+        image: 'CO.jpg'
+    },
+    so2: {
+        title: 'Sulfur Dioxide (SO₂)',
+        description: 'A colorless, highly reactive gas with a sharp, pungent odor similar to a struck match. It can irritate the skin and mucous membranes of the eyes, nose, and throat, and particularly affects the respiratory system.',
+        meaning: 'Even short-term exposure to levels around 75 ppb can cause significant bronchoconstriction in people with asthma. The WHO guideline for a 24-hour period is about 15 ppb.',
+        sources: 'The largest source is the burning of fossil fuels (containing sulfur) by power plants and other industrial facilities. Other sources include industrial smelters and volcanic eruptions.',
+        image: 'SO2.jpg'
+    },
+    no2: {
+        title: 'Nitrogen Dioxide (NO₂)',
+        description: 'A reddish-brown gas with a sharp, biting odor. It is a major contributor to urban haze and a precursor to both ozone and acid rain. It can aggravate respiratory diseases, particularly asthma, leading to coughing, wheezing, or difficulty breathing.',
+        meaning: 'The WHO guideline for annual average exposure is about 5 ppb (10 µg/m³). Levels often spike near heavy traffic, and concentrations above 100 ppb can cause significant respiratory distress.',
+        sources: 'Emitted from high-temperature combustion processes, primarily from car, truck, and bus engines, as well as power plants and industrial boilers.',
+        image: 'NO2.jpg'
+    },
+    o3: {
+        title: 'Ground-Level Ozone (O₃)',
+        description: 'Unlike the protective ozone layer in the stratosphere, ground-level ozone is a harmful pollutant and the main component of smog. It is not emitted directly but is formed by chemical reactions in the atmosphere.',
+        meaning: 'Often called a "sunburn for your lungs," it can cause chest pain, coughing, and throat irritation. Levels above 70 ppb are considered unhealthy for sensitive groups, and prolonged exposure can damage the lungs.',
+        sources: 'It is a secondary pollutant, created when nitrogen oxides (NOx) and volatile organic compounds (VOCs) react in the presence of sunlight and heat. This is why ozone levels are highest on hot, sunny afternoons.',
+        image: 'OZONO.jpg'
+    }
 
     function openModal(id) {
         const data = modalData[id];
@@ -1874,4 +1911,5 @@
   
 
 })();
+
 
