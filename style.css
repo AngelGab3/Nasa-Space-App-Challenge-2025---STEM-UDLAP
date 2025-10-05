@@ -323,7 +323,7 @@ section:not(:first-of-type)::before {
 /* =======================================
    ESTILOS PÁGINA CUENTA
    ======================================= */
-.profile-layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.profile-layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
 @media (max-width: 900px) { .profile-layout-grid { grid-template-columns: 1fr; } }
 .dashboard-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-1); backdrop-filter: blur(var(--glass-blur)); }
 .panel-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
@@ -697,10 +697,18 @@ body.modal-open {
     width: 100%;
     max-width: 1400px; /* keep layout centered on very wide screens */
     margin: 2.5rem auto 2rem; /* add top margin so it doesn't sit under the navbar */
-    grid-template-columns: 1.4fr 520px; /* left flexible column, right fixed */
+   grid-template-columns: 1fr 1fr; /* make Profile and Health columns equal width */
     gap: 48px;
+   align-items: stretch; /* ensure both columns stretch to equal height */
     padding: 0 24px; /* inner breathing space */
-    align-items: start;
+    }
+
+/* Make dashboard cards inside the profile grid stretch vertically so both columns match height */
+.profile-layout-grid > .dashboard-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
 }
 
 /* ------------------ Estilos del Perfil ------------------ */
@@ -750,6 +758,12 @@ body.modal-open {
     text-align: center;
     margin-left: auto;
     margin-right: auto;
+   /* Larger, more prominent title for 'My Personal Space' */
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 800;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
 }
 
 .profile-health-column {
@@ -761,7 +775,9 @@ body.modal-open {
 
 .profile-form-column {
     background: var(--color-white);
-    padding: 36px;
+   padding: 20px;
+    /* Raise the profile column slightly to better align with the Health panel title */
+    transform: translateY(-8px);
     border-radius: 14px;
 }
 
@@ -855,7 +871,7 @@ body.modal-open {
 
 .profile-settings-summary {
     border-top: 1px solid var(--color-border-light);
-    padding-top: 20px;
+     padding-top: 12px;
     margin-top: auto; /* Empuja al final del contenedor flex */
 }
 .profile-settings-summary .panel-title {
@@ -866,14 +882,26 @@ body.modal-open {
 }
 .profile-settings-summary p {
     margin-bottom: 8px;
-    font-size: 1.05rem;
+    font-size: 0.98rem;
+    display: grid;
+    grid-template-columns: 28px 1fr auto; /* icon | label | value */
+    gap: 10px 12px;
+    align-items: center;
 }
 .profile-settings-summary i {
     color: var(--color-accent-yellow);
-    margin-right: 8px;
+   /* center icon in its grid cell */
+    width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
 }
+.profile-settings-summary p strong { grid-column: 2; font-weight: 700; color: var(--color-deep); }
 .profile-settings-summary span {
-    font-weight: 600;
+   grid-column: 3; font-weight: 600; justify-self: start; color: var(--color-deep);
+}
+
+@media (max-width: 700px) {
+    .profile-settings-summary p { grid-template-columns: 20px 1fr; grid-auto-flow: row; }
+    .profile-settings-summary span { grid-column: 2; }
+    .profile-settings-summary p strong { grid-column: 2; }
 }
 
 /* ===== PERSONALIZED RECOMMENDATIONS STYLES - BEGIN (copy/paste friendly) ===== */
@@ -1208,4 +1236,5 @@ body.modal-open {
 
 /* ========================================================================= */
 /* MAP HEAT      */
+
 /* ========================================================================= */
