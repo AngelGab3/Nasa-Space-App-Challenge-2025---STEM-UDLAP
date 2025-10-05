@@ -31,31 +31,22 @@
                     <div class="dashboard-card profile-card-wide fade-in-left">
                         <div class="profile-form-column">
                             <h3 class="panel-title">Profile Information</h3>
-                            <div class="profile-avatar-area">
-                                <img src="avatar-placeholder.png" alt="Avatar" class="profile-avatar">
-                                <div style="display:flex; gap:8px; flex-direction:column; align-items:center;">
-                                    <button class="action-button-transparent small-button">Change Photo</button>
-                                    <button class="action-button-transparent small-button edit-data-account">Edit</button>
-                                </div>
-                            </div>
-
                             <form class="profile-form">
                                 <div class="form-group">
                                     <label for="name">Username</label>
                                     <input type="text" id="name" value="JuanPerez" readonly>
-                                    <i class="fas fa-pen edit-icon" data-field="name"></i>
                                 </div>
                                 <div class="form-group">
                                     <label for="email">Email</label>
                                     <input type="email" id="email" value="juan.perez@aeris.com" readonly>
-                                    <i class="fas fa-pen edit-icon" data-field="email"></i>
                                 </div>
                                 <div class="form-group">
                                     <label for="location">Preferred location</label>
                                     <input type="text" id="location" value="Mexico City" readonly>
-                                    <i class="fas fa-pen edit-icon" data-field="location"></i>
                                 </div>
-                                <button type="submit" class="action-button-solid save-button hidden">Save Changes</button>
+                                <div style="display:flex; justify-content:flex-start; margin-top:8px;">
+                                    <button id="profile-edit-btn" type="button" class="action-button-transparent small-button">Edit</button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -64,72 +55,26 @@
                         <aside class="profile-health-column">
                             <h3 class="panel-title">Health Settings</h3>
                             <p class="section-subtitle" style="margin-bottom: 15px;">Provide your health information to receive more accurate and personalized recommendations.</p>
-                            <div class="profile-settings-summary">
-                                <p><i class="fas fa-lungs"></i> <strong>At-risk group:</strong> <span id="sensitive-status">Yes (Asthma)</span></p>
-                                <p><i class="fas fa-bell"></i> <strong>Notifications:</strong> <span id="notifications-status">Enabled (Only for Poor AQI)</span></p>
-                                <div style="margin-top: 15px; display:flex; gap:8px;">
-                                    <button id="edit-inline-btn" class="action-button-transparent small-button">Edit details</button>
-                                    <button class="action-button-transparent small-button edit-data-account">Edit in modal</button>
+                                <div class="profile-settings-summary">
+                                <div id="health-summary">
+                                    <p><i class="fas fa-lungs"></i> <strong>Respiratory conditions:</strong> <span id="health-resp">--</span></p>
+                                    <p><i class="fas fa-running"></i> <strong>Physical activity level:</strong> <span id="health-activity">--</span></p>
+                                    <p><i class="fas fa-sun"></i> <strong>Average time outdoors:</strong> <span id="health-outdoor">--</span></p>
+                                    <p><i class="fas fa-clock"></i> <strong>Preferred time for activity:</strong> <span id="health-preftime">--</span></p>
+                                    <p><i class="fas fa-brain"></i> <strong>Environmental sensitivity:</strong> <span id="health-sens">--</span></p>
+                                    <p><i class="fas fa-bell"></i> <strong>Notifications:</strong> <span id="notifications-status">Enabled (Only for Poor AQI)</span></p>
                                 </div>
-
-                                <form id="inline-health-form" style="display:none; margin-top:12px; border-top:1px dashed var(--border); padding-top:12px;">
-                                    <div class="form-group">
-                                        <label for="inline-reg-resp">Respiratory conditions</label>
-                                        <select id="inline-reg-resp">
-                                            <option value="None">None</option>
-                                            <option>Asthma</option>
-                                            <option>Respiratory allergies</option>
-                                            <option>COPD</option>
-                                            <option>Chronic sinusitis</option>
-                                            <option>Recurrent bronchitis</option>
-                                            <option>Pulmonary fibrosis</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inline-reg-activity">Physical activity level</label>
-                                        <select id="inline-reg-activity">
-                                            <option>Sedentary (rarely exercise)</option>
-                                            <option>Moderate (light exercise several times a week)</option>
-                                            <option>Active (regular exercise, at least 3x/week)</option>
-                                            <option>Athlete (intense training or competitive)</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inline-reg-outdoor">Average time outdoors</label>
-                                        <select id="inline-reg-outdoor">
-                                            <option>Less than 1 hour</option>
-                                            <option>1 to 3 hours</option>
-                                            <option>3 to 6 hours</option>
-                                            <option>More than 6 hours</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inline-reg-preftime">Preferred time of day for activity</label>
-                                        <select id="inline-reg-preftime">
-                                            <option>morning</option>
-                                            <option>afternoon</option>
-                                            <option>evening</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inline-reg-sens">Environmental sensitivity</label>
-                                        <select id="inline-reg-sens">
-                                            <option>Sensitive skin or prone to irritation</option>
-                                            <option>Frequent headaches or migraines</option>
-                                            <option>Fatigue from pollution or heat</option>
-                                            <option>Prefer not to say</option>
-                                        </select>
-                                    </div>
-
-                                    <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:12px;">
-                                        <button type="button" id="inline-cancel" class="action-button-transparent">Cancel</button>
-                                        <button type="submit" class="action-button-solid">Save</button>
-                                    </div>
-                                </form>
+                                <div style="margin-top: 12px; display:flex; justify-content:flex-start; gap:8px;">
+                                    <button id="edit-inline-btn" class="action-button-transparent small-button">Edit details</button>
+                                </div>
                                 </div>
                         </aside>
                     </div>
                 </div>
+                <div style="margin-top:18px; text-align:center;">
+                    <button id="signout-btn" class="action-button-transparent">Cerrar sesión</button>
+                </div>
+
                 <div id="register-modal" class="modal-overlay">
                     <div class="modal-content registration-modal">
                         <button class="modal-close-btn" id="close-register" aria-label="Close">&times;</button>
