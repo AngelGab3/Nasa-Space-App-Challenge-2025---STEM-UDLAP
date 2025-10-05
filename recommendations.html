@@ -28,18 +28,52 @@
     </section>
 
     <section class="recommendations-section fade-section">
-  <h2 class="section-title">Explore Recommendations</h2>
-      <div class="carousel-wrapper">
-        <button class="carousel-arrow prev" aria-label="Previous">&lt;</button>
-        <div class="carousel" id="extended-carousel">
-          <div class="carousel-track">
-            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1473187983305-f615310e7daa');"><div class="carousel-overlay"><h3>Protect your lungs</h3></div></div>
-            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1564865875049-1efcd6a4b413');"><div class="carousel-overlay"><h3>Avoid high-traffic areas</h3></div></div>
-            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1542435503-956c469947f6');"><div class="carousel-overlay"><h3>Use sustainable transportation</h3></div></div>
-            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1469474968028-56623f02e42e');"><div class="carousel-overlay"><h3>Take active breaks at home</h3></div></div>
-          </div>
-        </div>
-        <button class="carousel-arrow next" aria-label="Next">&gt;</button>
+  <h2 class="section-title">Impactful Recommendation Cards</h2>
+  <div class="recommendation-cards-grid">
+    <div class="recommendation-card translucent-card card1" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Your Breath Tells a Story</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">The average person breathes over 20,000 times a day. Every breath you take carries the quality of the air around you.</p>
+        <p class="recommendation">Make clean air part of your daily routine—check the air quality like you check the weather.</p>
+      </div>
+    </div>
+    <div class="recommendation-card translucent-card card2" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Pollution Doesn’t Ask Permission</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">Air pollution enters your body silently, affecting your heart, brain, and even your sleep.</p>
+        <p class="recommendation">Protect yourself by staying informed. Awareness is your first line of defense.</p>
+      </div>
+    </div>
+    <div class="recommendation-card translucent-card card3" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Your Choices Shape the Air</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">Choosing to walk, bike, or use public transport just once a week can reduce your carbon footprint by up to 20%.</p>
+        <p class="recommendation">Start small. One less car ride is one step closer to cleaner air.</p>
+      </div>
+    </div>
+    <div class="recommendation-card translucent-card card4" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Children Breathe More Than Adults</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">Kids inhale more air per body weight than adults, making them more vulnerable to pollution.</p>
+        <p class="recommendation">Support clean air zones near schools and playgrounds. Their future depends on it.</p>
+      </div>
+    </div>
+    <div class="recommendation-card translucent-card card5" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Clean Air Boosts Brain Power</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">Studies show that students perform better in schools with better air quality.</p>
+        <p class="recommendation">Advocate for air monitoring in educational spaces. Learning thrives in clean environments.</p>
+      </div>
+    </div>
+    <div class="recommendation-card translucent-card card6" onclick="toggleRecCard(this)">
+      <h3 style="color:#111;">Air Pollution Is a Silent Inequality</h3>
+      <div class="rec-details" style="display:none;">
+        <p class="fact">Low-income communities are often exposed to higher pollution levels due to proximity to industrial zones.</p>
+        <p class="recommendation">Support environmental justice initiatives. Clean air should be a right, not a privilege.</p>
+      </div>
+    </div>
+  
+  </div>
       </div>
     </section>
 
@@ -130,4 +164,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
