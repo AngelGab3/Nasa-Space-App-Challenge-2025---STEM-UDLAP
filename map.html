@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map | Site Name</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Raleway:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+    <header id="navbar">
+        <div class="logo">Site Name</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="map.html" class="active">View Map</a>
+            <a href="recommendations.html">My Recommendations</a>
+            <a href="cuenta.html">Account</a>
+        </nav>
+    </header>
+    <main style="height:100vh; width:100vw; margin:0; padding:0;">
+        <section class="map-section" style="position:relative; height:100vh; width:100vw; margin:0; padding:0;">
+            <div id="map" style="width:100vw; height:100vh; position:absolute; top:0; left:0; z-index:1;"></div>
+            <aside id="filter-panel" class="filter-panel" aria-label="Map filter panel">
+                <h3 class="filter-title">Air Quality Map</h3>
+                <p class="section-subtitle" style="margin-bottom: 15px;">Explore the air quality in your area in real-time. Select different pollutants to see their concentration on the map.</p>
+
+                <div class="filter-location">
+                    <i class="fas fa-map-marker-alt location-icon" aria-hidden="true"></i>
+                    <div class="location-text">
+                        <span class="small-label">Detected location</span>
+                        <div id="detected-location">Detecting location...</div>
+                    </div>
+                </div>
+
+                <div class="filter-aqi">
+                    <small class="aqi-label-small">Air Quality Index</small>
+                    <div class="aqi-display-row">
+                        <span id="panel-aqi-value" class="panel-aqi-value">--</span>
+                        <span id="panel-aqi-emoji" class="panel-aqi-emoji" aria-hidden="true">🙂</span>
+                    </div>
+                        <!-- panel-station and panel-dominant removed; info will appear in Detected location and AQI -->
+                </div>
+
+                <label for="pollutant-select" class="selector-label">Show on the map</label>
+                <select id="pollutant-select" class="pollutant-select">
+                    <option value="aqi">General AQI</option>
+                    <option value="pm25">PM2.5</option>
+                    <option value="pm10">PM10</option>
+                    <option value="o3">Ozone (O3)</option>
+                    <option value="no2">Nitrogen dioxide (NO2)</option>
+                </select>
+
+                <div style="margin-top:12px">
+                    <label class="selector-label" for="aqi-min">Filter by AQI (range)</label>
+                    <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+                        <input id="aqi-min" type="number" placeholder="min" min="0" style="width:72px;padding:6px;border-radius:4px;border:1px solid #ddd" />
+                        <input id="aqi-max" type="number" placeholder="max" min="0" style="width:72px;padding:6px;border-radius:4px;border:1px solid #ddd" />
+                        <button id="aqi-clear" style="padding:6px 8px;border-radius:4px;border:1px solid #ccc;background:#fff;cursor:pointer">Remove</button>
+                    </div>
+
+                    <!-- Removed station select and text search as requested -->
+                </div>
+
+                <div id="info-detalles" class="info-detalles" style="margin-top:12px">Select a point on the map to see pollutant details.</div>
+            </aside>
+            <div id="aqi-legend" class="aqi-legend" aria-hidden="false">
+                <div class="legend-title">AQI Scale</div>
+                <div class="legend-bars" aria-hidden="false"></div>
+            </div>
+        </section>
+     </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

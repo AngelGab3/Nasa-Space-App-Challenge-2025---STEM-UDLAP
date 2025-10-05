@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Name | My Recommendations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Raleway:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="navbar">
+    <div class="logo">Site Name</div>
+    <nav>
+        <a href="index.html">Home</a>
+      <a href="index.html#mapa">View Map</a>
+  <a href="recommendations.html" class="active">My Recommendations</a>
+  <a href="cuenta.html">Account</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero-section small-hero">
+      <div class="particle-container" id="particle-container"></div>
+      <div class="hero-content">
+  <h1 class="hero-title">My Recommendations</h1>
+        <p class="hero-subtitle">Discover tips and data to take care of your environment.</p>
+      </div>
+    </section>
+
+    <section class="recommendations-section fade-section">
+  <h2 class="section-title">Explore Recommendations</h2>
+      <div class="carousel-wrapper">
+        <button class="carousel-arrow prev" aria-label="Previous">&lt;</button>
+        <div class="carousel" id="extended-carousel">
+          <div class="carousel-track">
+            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1473187983305-f615310e7daa');"><div class="carousel-overlay"><h3>Protect your lungs</h3></div></div>
+            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1564865875049-1efcd6a4b413');"><div class="carousel-overlay"><h3>Avoid high-traffic areas</h3></div></div>
+            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1542435503-956c469947f6');"><div class="carousel-overlay"><h3>Use sustainable transportation</h3></div></div>
+            <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1469474968028-56623f02e42e');"><div class="carousel-overlay"><h3>Take active breaks at home</h3></div></div>
+          </div>
+        </div>
+        <button class="carousel-arrow next" aria-label="Next">&gt;</button>
+      </div>
+    </section>
+
+    <section class="info-panels fade-section">
+     <!-- START PERSONALIZED RECOMMENDATIONS - BEGIN (copy/paste this block into another repo) -->
+      <div class="translucent-panel" id="personal-recommendations">
+        <h2>Consejos personalizados</h2>
+  <p class="muted">Get recommendations tailored to your health profile and the air quality (AQI).</p>
+
+        <!-- Small meta row: AQI display (populated by script) -->
+        <div class="rec-meta">
+          <div class="rec-aqi">AQI actual: <strong id="current-aqi-value">--</strong> <span id="current-aqi-emoji"></span></div>
+          <div class="rec-location" id="rec-location" style="display:none;"></div>
+        </div>
+
+        <!-- Recommendations will be injected here -->
+        <div id="recommendations-list" class="recommendations-list">
+          <!-- JS injecta tarjetas de recomendación aquí -->
+        </div>
+
+        <!-- If user is not registered, we show a prompt here (script toggles display) -->
+  <div id="register-prompt" class="register-prompt" style="margin-top:12px;">
+          <p>If you don't have an account yet, create one to receive personalized recommendations and track your health.</p>
+          <!-- Use an anchor styled as a button so navigation works without extra JS -->
+          <a id="open-register-cta" class="action-button-solid" href="cuenta.html">Create account</a>
+        </div>
+      </div>
+      <!-- END PERSONALIZED RECOMMENDATIONS -->
+
+      <div class="dashboard-card chatbot-card">
+        <h3 class="panel-title chatbot-header">Virtual Assistant <i class="fas fa-robot"></i></h3>
+        <div class="chat-window" id="chat-window">
+          <div class="message bot-message">
+            <p>Hello JuanPerez, how can I help you today with your environmental health?</p>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Write your question..." maxlength="150">
+          <button id="send-btn" class="action-button-solid">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Site Name — All rights reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

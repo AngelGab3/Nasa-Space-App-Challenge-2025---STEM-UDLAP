@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Name | Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Raleway:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="navbar">
+    <div class="logo">Site Name</div>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="map.html">View Map</a>
+      <a href="recommendations.html">My Recommendations</a>
+      <a href="cuenta.html">Account</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero-section">
+      <div class="particle-container" id="particle-container"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">Site Name</h1>
+        <p class="hero-subtitle">Intelligent environmental prediction for your day.</p>
+      </div>
+    </section>
+
+    <section class="air-quality-section fade-section">
+      <div class="aq-left">
+        <h2 class="section-title">Today's air quality is: <span id="aqi-value-text">-- AQI</span></h2>
+        <div class="aqi-gauge-container">
+          <div class="aqi-gauge">
+            <div class="aqi-gauge-pointer" id="aqi-pointer"></div>
+          </div>
+          <div class="aqi-gauge-info">
+            <span class="aqi-numeric" id="aqi-numeric-display">--</span>
+            <span class="aqi-level" id="aqi-level-display">--</span>
+          </div>
+        </div>
+        <button class="details-btn">More Details Here</button>
+      </div>
+      <div class="aq-right">
+          <h3 class="recommendation-title">Daily Recommendations</h3>
+          <ul class="daily-recommendations">
+              <li><i data-feather="wind"></i><span><strong>Ventilation:</strong> Open windows for short periods to improve indoor air quality.</span></li>
+              <li><i data-feather="sun"></i><span><strong>Outdoor activity:</strong> Ideal for moderate activities. Enjoy the outdoors!</span></li>
+              <li><i data-feather="shield"></i><span><strong>Sensitive groups:</strong> Consider reducing prolonged or intense outdoor exertion.</span></li>
+          </ul>
+      </div>
+      </section> <section class="contaminants-section fade-section">
+      <div class="section-header">
+          <div>
+              <h2 class="section-title" style="text-align: left; margin-bottom: 5px;">Main Air Pollutants</h2>
+              <p id="home-location-subtitle" class="location-subtitle" style="margin-bottom:14px;">San Andrés Cholula, Puebla</p>
+              <p class="section-subtitle">Learn more about the pollutants that affect your daily life and how they are measured.</p>
+        <br>
+
+      <div class="contaminants-grid">
+          <div class="contaminant-card" data-contaminant="pm25"><div class="card-icon"></div><div class="card-info"><span class="name">Particulate Matter (PM2.5)</span><span class="value">15 <small>µg/m³</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+          <div class="contaminant-card" data-contaminant="pm10"><div class="card-icon"></div><div class="card-info"><span class="name">Particulate Matter (PM10)</span><span class="value">27 <small>µg/m³</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+          <div class="contaminant-card" data-contaminant="co"><div class="card-icon"></div><div class="card-info"><span class="name">Carbon Monoxide (CO)</span><span class="value">355 <small>ppb</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+          <div class="contaminant-card" data-contaminant="so2"><div class="card-icon"></div><div class="card-info"><span class="name">Sulfur Dioxide (SO₂)</span><span class="value">1 <small>ppb</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+          <div class="contaminant-card" data-contaminant="no2"><div class="card-icon"></div><div class="card-info"><span class="name">Nitrogen Dioxide (NO₂)</span><span class="value">6 <small>ppb</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+          <div class="contaminant-card" data-contaminant="o3"><div class="card-icon"></div><div class="card-info"><span class="name">Ozone (O₃)</span><span class="value">28 <small>ppb</small></span></div><div class="card-arrow"><i data-feather="chevron-right"></i></div></div>
+      </div>
+      <div id="contaminant-details-panel" class="contaminant-details-panel">
+          <div class="details-content-wrapper"></div>
+      </div>
+    </section>
+
+    <section class="forecast-section fade-section">
+      <h2 class="section-title">Today's Forecast</h2>
+      <p class="section-subtitle">Check the weather forecast for the next few days to plan your outdoor activities.</p>
+      <div class="forecast-grid">
+          <div class="forecast-card" data-day="Monday"><h3>Monday</h3><p>Partly cloudy</p><button class="expand-btn">View details</button><div class="forecast-details"><p>Details...</p></div></div>
+          <div class="forecast-card" data-day="Tuesday"><h3>Tuesday</h3><p>Sunny day</p><button class="expand-btn">View details</button><div class="forecast-details"><p>Details...</p></div></div>
+          <div class="forecast-card" data-day="Wednesday"><h3>Wednesday</h3><p>Chance of rain</p><button class="expand-btn">View details</button><div class="forecast-details"><p>Details...</p></div></div>
+        <div class="forecast-image-area"><img src="Tierra.jpg" alt="Planet Earth" /><p>Environmental observation data.</p></div>
+      </div>
+    </section>
+
+   <section class="recommendations-section fade-section">
+      <h2 class="section-title">Learn More</h2>
+      <p class="section-subtitle">Understanding air quality is essential for your health. Here we explain its importance.</p>
+      <div class="carousel-wrapper">
+        <button class="carousel-arrow prev" aria-label="Previous">&lt;</button>
+        <div class="carousel" id="recommendation-carousel">
+          <div class="carousel-track">
+            <div class="carousel-card info-card" style="background-image:url('images/Sabias1.jpg');" data-modal-id="sabias-que-1">
+                <div class="carousel-overlay"><h3>Did you know...</h3></div>
+            </div>
+            <div class="carousel-card info-card" style="background-image:url('images/AQI.jpg');" data-modal-id="aqi">
+                <div class="carousel-overlay"><h3>What is the AQI?</h3></div>
+            </div>
+            <div class="carousel-card info-card" style="background-image:url('images/Tipos.jpg');" data-modal-id="contaminantes">
+                <div class="carousel-overlay"><h3>Types of pollutants</h3></div>
+            </div>
+            <div class="carousel-card info-card" style="background-image:url('images/sabias2.jpg');" data-modal-id="sabias-que-2">
+                <div class="carousel-overlay"><h3>Did you know...</h3></div>
+            </div>
+            <div class="carousel-card info-card" style="background-image:url('images/salud.jpg');" data-modal-id="como-mejorar">
+                <div class="carousel-overlay"><h3>How can you improve your health?</h3></div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-arrow next" aria-label="Next">&gt;</button>
+      </div>
+    </section>
+
+    <section id="mapa-preview" class="map-preview-section fade-section">
+      <h2 class="section-title">Find out how you can improve your health</h2>
+      <p class="section-subtitle">See your personalized recommendations and start improving your quality of life</p>
+      <a href="recommendations.html" class="details-btn">Explore your Recommendations</a>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Site Name — All rights reserved.</p>
+  </footer>
+
+  <div id="info-modal-overlay" class="modal-overlay">
+    <div id="info-modal" class="modal-content">
+      <button id="modal-close-btn" class="modal-close-btn" aria-label="Close">&times;</button>
+      <div id="modal-body" class="modal-body">
+        </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
