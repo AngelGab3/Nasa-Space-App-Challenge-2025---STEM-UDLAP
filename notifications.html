@@ -1,1 +1,297 @@
+*Este es el html de correos* <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stations - Air Quality</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 20px; 
+            background: linear-gradient(to bottom, #e0e7ff, #f5f5f5);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        h1 { 
+            color: #1e293b; 
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .subscribe-box {
+            margin-bottom: 40px;
+            padding: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        .subscribe-box h2 { 
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        .subscribe-box p {
+            opacity: 0.95;
+            margin-bottom: 25px;
+            font-size: 1.05rem;
+        }
+        .subscribe-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .subscribe-form input {
+            padding: 14px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .subscribe-form input:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+        .subscribe-form input[type="email"] { 
+            flex: 1; 
+            min-width: 250px; 
+        }
+        .subscribe-form input[type="text"] { 
+            flex: 1; 
+            min-width: 200px; 
+        }
+        .subscribe-form button {
+            padding: 14px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .subscribe-form button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .subscribe-form button:active {
+            transform: translateY(0);
+        }
+        .subscribe-form button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #subMessage { 
+            margin-top: 20px; 
+            font-size: 15px; 
+            font-weight: 500;
+            padding: 12px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.15);
+            display: none;
+        }
+        #subMessage.show { display: block; }
+        
+        .stations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .station { 
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .station:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .station h3 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .station p {
+            color: #64748b;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+        .aqi { 
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 4px 4px 4px 0;
+            font-size: 0.9rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .subscribe-box { padding: 25px; }
+            .subscribe-form { flex-direction: column; }
+            .subscribe-form input,
+            .subscribe-form button {
+                width: 100%;
+            }
+            .stations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Air Quality Stations</h1>
+        
+        <div class="subscribe-box">
+            <h2>Receive Daily Reports</h2>
+            <p>Sign up and receive a complete report on your city's air quality every morning.</p>
+            
+            <form id="subscribeForm" class="subscribe-form">
+                <input type="email" id="emailInput" placeholder="you@email.com" required>
+                <input type="text" id="cityInput" placeholder="City (Optional: New York, Los Angeles...)">
+                <button type="submit" id="submitBtn">Suscribe</button>
+            </form>
+            
+            <p id="subMessage"></p>
+        </div>
 
+        <div id="stations" class="loading">Charging stations...</div>
+    </div>
+    
+    <script>
+        const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxZWdjZGl6b2x0Y2l1cHNvemNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNzE2MzYsImV4cCI6MjA3NDk0NzYzNn0.9PKz0IAC_3_tgF6q-n8ruckfLSt5XOcGDVzHSTTZsaI';
+        const SUPABASE_URL = 'https://kqegcdizoltciupsozco.supabase.co';
+        
+        // Cargar estaciones
+        fetch(`${SUPABASE_URL}/rest/v1/latest_air_quality?select=*`, {
+            headers: { 
+                'apikey': API_KEY, 
+                'Authorization': `Bearer ${API_KEY}` 
+            }
+        })
+        .then(r => r.json())
+        .then(stations => {
+            if (!stations || stations.length === 0) {
+                document.getElementById('stations').innerHTML = '<p class="loading">No data available</p>';
+                return;
+            }
+            
+            document.getElementById('stations').className = 'stations-grid';
+            document.getElementById('stations').innerHTML = stations.slice(0, 50).map(s => {
+                const stationName = s.station_id.split(':')[1]?.replace(/_/g, ' ') || s.station_id;
+                return `
+                    <div class="station">
+                        <h3>${stationName}</h3>
+                        <p>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}</p>
+                        <div>
+                            ${s.pm25 ? `<span class="aqi" style="background: ${getAQIColor(s.pm25)}; color: ${s.pm25 <= 100 ? '#000' : '#fff'}">PM2.5: ${s.pm25}</span>` : ''}
+                            ${s.o3 ? `<span class="aqi" style="background: ${getAQIColor(s.o3)}; color: #000">O3: ${s.o3}</span>` : ''}
+                            ${s.no2 ? `<span class="aqi" style="background: ${getAQIColor(s.no2)}; color: #000">NO2: ${s.no2}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(err => {
+            document.getElementById('stations').innerHTML = `<p class="loading">Error: ${err.message}</p>`;
+            console.error('Error loading stations:', err);
+        });
+
+        function getAQIColor(value) {
+            if (value <= 50) return '#00e400';
+            if (value <= 100) return '#ffff00';
+            if (value <= 150) return '#ff7e00';
+            if (value <= 200) return '#ff0000';
+            if (value <= 300) return '#8f3f97';
+            return '#7e0023';
+        }
+
+        // Manejar suscripcion
+        document.getElementById('subscribeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailInput').value;
+            const city = document.getElementById('cityInput').value;
+            const message = document.getElementById('subMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Deshabilitar boton
+            submitBtn.disabled = true;
+            
+            message.className = 'show';
+            message.textContent = 'Processing...';
+            message.style.color = '#fff';
+            message.style.background = 'rgba(255,255,255,0.2)';
+            
+            try {
+                // 1. Registrar el email
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/email_subscriptions`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({ 
+                        email, 
+                        city_name: city || null 
+                    })
+                });
+                
+                if (response.ok) {
+                    message.textContent = 'Subscription successful! Sending welcome email...';
+                    
+                    // 2. Enviar email de bienvenida
+                    const emailResponse = await fetch(`${SUPABASE_URL}/functions/v1/send-aqi-emails`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${API_KEY}`
+                        }
+                    });
+                    
+                    const emailResult = await emailResponse.json();
+                    console.log('Email result:', emailResult);
+                    
+                    message.style.color = '#00ff00';
+                    message.style.background = 'rgba(0,255,0,0.15)';
+                    message.textContent = `Done! Check your email. You'll receive daily reports at 8:00 AM.`;
+                    e.target.reset();
+                } else {
+                    const error = await response.json();
+                    message.style.color = '#ffcccc';
+                    message.style.background = 'rgba(255,0,0,0.15)';
+                    if (error.code === '23505') {
+                        message.textContent = 'This email is already registered.';
+                    } else {
+                        message.textContent = 'Error: ' + (error.message || 'The subscription could not be completed');
+                        console.error('Error:', error);
+                    }
+                }
+            } catch (error) {
+                message.style.color = '#ffcccc';
+                message.style.background = 'rgba(255,0,0,0.15)';
+                message.textContent = 'Connection error. Please try again.';
+                console.error('Error:', error);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
