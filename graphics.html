@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 20px; 
+            background: linear-gradient(to bottom, #e0e7ff, #f5f5f5);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        h1 { 
+            color: #1e293b; 
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        /* State comparison */
+        .state-comparison {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .state-comparison h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .state-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .state-selector select {
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .state-selector button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .state-selector button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .comparison-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .comparison-card h3 {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .comparison-card .value {
+            color: #1e293b;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* Charts section */
+        .charts-section {
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            color: #1e293b;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .charts-section { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header id="navbar">
+    <div class="logo">MAIA (My Adaptive IntelligenceAdvisor)</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="map.html">View Map</a>
+            <a href="map3d.html">MAP 3D</a>
+            <a href="notifications.html">Notifications</a>
+            <a href="graphics.html" class="active">Graphics</a>
+            <a href="recommendations.html">My Recommendations</a>
+            <a href="cuenta.html">Account</a>
+        </nav>
+    </header>
+
+        <div class="container" style="padding-top:84px;">
+        <h1>Air Quality Dashboard</h1>
+
+        <!-- State Comparison -->
+        <div class="state-comparison">
+            <h2>Compare States</h2>
+            <div class="state-selector">
+                <select id="state1">
+                    <option value="">Select State 1</option>
+                </select>
+                <select id="state2">
+                    <option value="">Select State 2</option>
+                </select>
+                <button onclick="compareStates()">Compare</button>
+            </div>
+            <div id="comparisonResults" class="comparison-grid" style="display: none;"></div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Stations</h3>
+                <div class="value" id="totalStations">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average PM2.5</h3>
+                <div class="value" id="avgPM25">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Worst AQI</h3>
+                <div class="value" id="worstAQI">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Good Quality</h3>
+                <div class="value" id="goodQuality">-</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <h2>PM2.5 Distribution</h2>
+                <div class="chart-wrapper">
+                    <canvas id="pm25Chart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>AQI Categories</h2>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>Top 10 Worst Stations</h2>
+                <div class="chart-wrapper">
+                    <canvas id="topStationsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>Pollutant Comparison</h2>
+                <div class="chart-wrapper">
+                    <canvas id="pollutantsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxZWdjZGl6b2x0Y2l1cHNvemNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNzE2MzYsImV4cCI6MjA3NDk0NzYzNn0.9PKz0IAC_3_tgF6q-n8ruckfLSt5XOcGDVzHSTTZsaI';
+        const SUPABASE_URL = 'https://kqegcdizoltciupsozco.supabase.co';
+        
+        let allStations = [];
+        let stateData = {};
+
+        // State coordinates (approximate centers)
+        const stateCoords = {
+            'California': {lat: 36.7783, lon: -119.4179},
+            'Texas': {lat: 31.9686, lon: -99.9018},
+            'Florida': {lat: 27.6648, lon: -81.5158},
+            'New York': {lat: 43.2994, lon: -74.2179},
+            'Pennsylvania': {lat: 41.2033, lon: -77.1945},
+            'Illinois': {lat: 40.6331, lon: -89.3985},
+            'Ohio': {lat: 40.4173, lon: -82.9071},
+            'Georgia': {lat: 32.1656, lon: -82.9001},
+            'North Carolina': {lat: 35.7596, lon: -79.0193},
+            'Michigan': {lat: 44.3148, lon: -85.6024}
+        };
+
+        // Fetch data from measurement_rt table (last 24 hours)
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        
+        fetch(`${SUPABASE_URL}/rest/v1/measurement_rt?select=*&ts=gte.${yesterday}&order=ts.desc`, {
+            headers: { 
+                'apikey': API_KEY, 
+                'Authorization': `Bearer ${API_KEY}` 
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                alert('No data available');
+                return;
+            }
+            
+            // Group by station_id and keep only the latest reading per station
+            const stationMap = new Map();
+            data.forEach(row => {
+                if (!stationMap.has(row.station_id)) {
+                    stationMap.set(row.station_id, row);
+                }
+            });
+            
+            allStations = Array.from(stationMap.values());
+            
+            groupByState(allStations);
+            populateStateSelectors();
+            updateStats(allStations);
+            createCharts(allStations);
+        })
+        .catch(err => {
+            alert('Error loading data: ' + err.message);
+            console.error('Error loading stations:', err);
+        });
+
+        function groupByState(stations) {
+            stations.forEach(station => {
+                let closestState = null;
+                let minDistance = Infinity;
+                
+                Object.entries(stateCoords).forEach(([state, coords]) => {
+                    const distance = Math.sqrt(
+                        Math.pow(station.lat - coords.lat, 2) + 
+                        Math.pow(station.lon - coords.lon, 2)
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestState = state;
+                    }
+                });
+                
+                if (!stateData[closestState]) stateData[closestState] = [];
+                stateData[closestState].push(station);
+            });
+        }
+
+        function populateStateSelectors() {
+            const states = Object.keys(stateData).sort();
+            const select1 = document.getElementById('state1');
+            const select2 = document.getElementById('state2');
+            
+            states.forEach(state => {
+                select1.innerHTML += `<option value="${state}">${state}</option>`;
+                select2.innerHTML += `<option value="${state}">${state}</option>`;
+            });
+        }
+
+        function compareStates() {
+            const state1 = document.getElementById('state1').value;
+            const state2 = document.getElementById('state2').value;
+            
+            if (!state1 || !state2) {
+                alert('Please select two states to compare');
+                return;
+            }
+            
+            const data1 = stateData[state1];
+            const data2 = stateData[state2];
+            
+            const results = document.getElementById('comparisonResults');
+            results.style.display = 'grid';
+            
+            const avg1 = data1.filter(s => s.pm25).reduce((a, b) => a + b.pm25, 0) / data1.filter(s => s.pm25).length || 0;
+            const avg2 = data2.filter(s => s.pm25).reduce((a, b) => a + b.pm25, 0) / data2.filter(s => s.pm25).length || 0;
+            
+            const worst1 = Math.max(...data1.filter(s => s.pm25).map(s => s.pm25));
+            const worst2 = Math.max(...data2.filter(s => s.pm25).map(s => s.pm25));
+            
+            results.innerHTML = `
+                <div class="comparison-card">
+                    <h3>${state1}</h3>
+                    <div class="value">${avg1.toFixed(1)}</div>
+                    <p style="color: #64748b; margin-top: 5px;">Avg PM2.5</p>
+                </div>
+                <div class="comparison-card">
+                    <h3>${state2}</h3>
+                    <div class="value">${avg2.toFixed(1)}</div>
+                    <p style="color: #64748b; margin-top: 5px;">Avg PM2.5</p>
+                </div>
+                <div class="comparison-card">
+                    <h3>${state1}</h3>
+                    <div class="value">${worst1}</div>
+                    <p style="color: #64748b; margin-top: 5px;">Worst AQI</p>
+                </div>
+                <div class="comparison-card">
+                    <h3>${state2}</h3>
+                    <div class="value">${worst2}</div>
+                    <p style="color: #64748b; margin-top: 5px;">Worst AQI</p>
+                </div>
+            `;
+        }
+
+        function updateStats(stations) {
+            const pm25Values = stations.filter(s => s.pm25).map(s => s.pm25);
+            const avgPM25 = pm25Values.reduce((a, b) => a + b, 0) / pm25Values.length;
+            const worstAQI = Math.max(...pm25Values);
+            const goodQuality = stations.filter(s => s.pm25 && s.pm25 <= 50).length;
+
+            document.getElementById('totalStations').textContent = stations.length;
+            document.getElementById('avgPM25').textContent = avgPM25.toFixed(1);
+            document.getElementById('worstAQI').textContent = worstAQI;
+            document.getElementById('goodQuality').textContent = `${goodQuality}/${stations.length}`;
+        }
+
+        function createCharts(stations) {
+            createPM25Distribution(stations);
+            createCategoryChart(stations);
+            createTopStationsChart(stations);
+            createPollutantsChart(stations);
+        }
+
+        function createPM25Distribution(stations) {
+            const pm25Values = stations.filter(s => s.pm25).map(s => s.pm25);
+            
+            const ctx = document.getElementById('pm25Chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-50', '51-100', '101-150', '151-200', '200+'],
+                    datasets: [{
+                        label: 'Number of Stations',
+                        data: [
+                            pm25Values.filter(v => v <= 50).length,
+                            pm25Values.filter(v => v > 50 && v <= 100).length,
+                            pm25Values.filter(v => v > 100 && v <= 150).length,
+                            pm25Values.filter(v => v > 150 && v <= 200).length,
+                            pm25Values.filter(v => v > 200).length
+                        ],
+                        backgroundColor: ['#00e400', '#ffff00', '#ff7e00', '#ff0000', '#8f3f97']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createCategoryChart(stations) {
+            const pm25Values = stations.filter(s => s.pm25).map(s => s.pm25);
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Good', 'Moderate', 'Unhealthy (SG)', 'Unhealthy', 'Very Unhealthy'],
+                    datasets: [{
+                        data: [
+                            pm25Values.filter(v => v <= 50).length,
+                            pm25Values.filter(v => v > 50 && v <= 100).length,
+                            pm25Values.filter(v => v > 100 && v <= 150).length,
+                            pm25Values.filter(v => v > 150 && v <= 200).length,
+                            pm25Values.filter(v => v > 200).length
+                        ],
+                        backgroundColor: ['#00e400', '#ffff00', '#ff7e00', '#ff0000', '#8f3f97']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createTopStationsChart(stations) {
+            const sorted = stations
+                .filter(s => s.pm25)
+                .sort((a, b) => b.pm25 - a.pm25)
+                .slice(0, 10);
+            
+            const ctx = document.getElementById('topStationsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(s => {
+                        const name = s.station_id.split(':')[1]?.replace(/_/g, ' ') || 'Unknown';
+                        return name.length > 15 ? name.substring(0, 15) + '...' : name;
+                    }),
+                    datasets: [{
+                        label: 'PM2.5',
+                        data: sorted.map(s => s.pm25),
+                        backgroundColor: sorted.map(s => getAQIColor(s.pm25))
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createPollutantsChart(stations) {
+            const avgPM25 = stations.filter(s => s.pm25).reduce((a, b) => a + b.pm25, 0) / stations.filter(s => s.pm25).length || 0;
+            const avgO3 = stations.filter(s => s.o3).reduce((a, b) => a + b.o3, 0) / stations.filter(s => s.o3).length || 0;
+            const avgNO2 = stations.filter(s => s.no2).reduce((a, b) => a + b.no2, 0) / stations.filter(s => s.no2).length || 0;
+            
+            const ctx = document.getElementById('pollutantsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['PM2.5', 'O3', 'NO2'],
+                    datasets: [{
+                        label: 'Average AQI',
+                        data: [avgPM25, avgO3, avgNO2],
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#667eea',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function getAQIColor(value) {
+            if (value <= 50) return '#00e400';
+            if (value <= 100) return '#ffff00';
+            if (value <= 150) return '#ff7e00';
+            if (value <= 200) return '#ff0000';
+            if (value <= 300) return '#8f3f97';
+            return '#7e0023';
+        }
+    </script>
+</body>
+</html>

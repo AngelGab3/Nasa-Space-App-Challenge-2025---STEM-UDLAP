@@ -11,6 +11,52 @@
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
 
+  // Data for contaminant cards (moved to top-level so all modules can access it)
+  const contaminantsData = {
+    pm25: {
+        title: 'Particulate Matter (PM2.5)',
+        description: 'Microscopic particles less than 2.5 micrometers in diameter, about 1/30th the width of a human hair. Because they are so small and light, they can stay in the air for longer periods and can penetrate deep into the lungs and even enter the bloodstream.',
+        meaning: 'The WHO guideline for annual average exposure is 5 µg/m³. Any level above this increases the risk of respiratory and cardiovascular diseases. Consistent values above 12 µg/m³ are often considered unhealthy for sensitive groups.',
+        sources: 'Primarily from combustion sources like vehicle exhaust, power plants, industrial emissions, wildfires, and even indoor activities like cooking and burning candles.',
+        image: '2.5PM.jpg'
+    },
+    pm10: {
+        title: 'Particulate Matter (PM10)',
+        description: 'Inhalable coarse particles with a diameter between 2.5 and 10 micrometers. They are smaller than a strand of hair but larger than PM2.5. They can irritate the eyes, nose, and throat and can worsen conditions like asthma and bronchitis.',
+        meaning: 'The WHO considers an annual average of 15 µg/m³ to be the guideline limit. Short-term spikes above 50 µg/m³ can cause significant respiratory issues, especially for people with pre-existing conditions.',
+        sources: 'Generated from mechanical processes like road dust kicked up by vehicles, construction sites, landfills, and agriculture. Also includes natural sources like pollen and mold spores.',
+        image: '10PM.jpg'
+    },
+    co: {
+        title: 'Carbon Monoxide (CO)',
+        description: 'A colorless, odorless, and tasteless gas often called the "silent killer." It is highly toxic because it reduces the ability of blood to carry oxygen to the body\'s organs and tissues.',
+        meaning: 'Outdoor levels are typically low. The health standard is usually around 9 ppm (9,000 ppb) over 8 hours. Any sustained indoor concentration is a serious concern, as it points to faulty fuel-burning appliances.',
+        sources: 'Results from the incomplete combustion of carbon-containing fuels. Common sources include vehicle exhaust, industrial processes, and malfunctioning residential appliances like furnaces, water heaters, and stoves.',
+        image: 'CO.jpg'
+    },
+    so2: {
+        title: 'Sulfur Dioxide (SO₂)',
+        description: 'A colorless, highly reactive gas with a sharp, pungent odor similar to a struck match. It can irritate the skin and mucous membranes of the eyes, nose, and throat, and particularly affects the respiratory system.',
+        meaning: 'Even short-term exposure to levels around 75 ppb can cause significant bronchoconstriction in people with asthma. The WHO guideline for a 24-hour period is about 15 ppb.',
+        sources: 'The largest source is the burning of fossil fuels (containing sulfur) by power plants and other industrial facilities. Other sources include industrial smelters and volcanic eruptions.',
+        image: 'SO2.jpg'
+    },
+    no2: {
+        title: 'Nitrogen Dioxide (NO₂)',
+        description: 'A reddish-brown gas with a sharp, biting odor. It is a major contributor to urban haze and a precursor to both ozone and acid rain. It can aggravate respiratory diseases, particularly asthma, leading to coughing, wheezing, or difficulty breathing.',
+        meaning: 'The WHO guideline for annual average exposure is about 5 ppb (10 µg/m³). Levels often spike near heavy traffic, and concentrations above 100 ppb can cause significant respiratory distress.',
+        sources: 'Emitted from high-temperature combustion processes, primarily from car, truck, and bus engines, as well as power plants and industrial boilers.',
+        image: 'NO2.jpg'
+    },
+    o3: {
+        title: 'Ground-Level Ozone (O₃)',
+        description: 'Unlike the protective ozone layer in the stratosphere, ground-level ozone is a harmful pollutant and the main component of smog. It is not emitted directly but is formed by chemical reactions in the atmosphere.',
+        meaning: 'Often called a "sunburn for your lungs," it can cause chest pain, coughing, and throat irritation. Levels above 70 ppb are considered unhealthy for sensitive groups, and prolonged exposure can damage the lungs.',
+        sources: 'It is a secondary pollutant, created when nitrogen oxides (NOx) and volatile organic compounds (VOCs) react in the presence of sunlight and heat. This is why ozone levels are highest on hot, sunny afternoons.',
+        image: 'OZONO.jpg'
+    }
+  };
+
   /**
    * INICIALIZADOR PRINCIPAL
    */
@@ -88,9 +134,26 @@
               }
           }
 
-          function renderDailyRecommendations() {
-              const aqi = getCurrentAQI();
-              const recs = getRecommendationsByAQI(aqi);
+          function renderDailyRecommendations(aqiFromEvent) {
+              // Priority: explicit aqiFromEvent -> persisted nearest_station_aqi -> DOM gauge value -> null
+              let aqi = null;
+              if (typeof aqiFromEvent === 'number' && !isNaN(aqiFromEvent)) aqi = aqiFromEvent;
+              if (aqi == null) {
+                  try {
+                      const persisted = localStorage.getItem('nearest_station_aqi');
+                      if (persisted != null && persisted !== '' && !isNaN(Number(persisted))) aqi = Number(persisted);
+                  } catch (e) {}
+              }
+              if (aqi == null) aqi = getCurrentAQI();
+              try { console.debug('renderDailyRecommendations running, resolved aqi=', aqi); } catch(e){}
+              let recs = getRecommendationsByAQI(aqi);
+              if (!recs || !Array.isArray(recs) || recs.length === 0) {
+                  recs = [
+                      { icon: 'wind', title: 'Ventilation', text: 'Open windows for short periods to improve indoor air.' },
+                      { icon: 'sun', title: 'Outdoor activity', text: 'Good time for moderate outdoor activity.' },
+                      { icon: 'shield', title: 'Sensitive groups', text: 'Consider reducing prolonged exertion if you are sensitive.' }
+                  ];
+              }
               const list = document.getElementById('daily-recommendations-list');
               if (!list) return;
               list.innerHTML = '';
@@ -103,11 +166,23 @@
           }
 
           // Initial render and update on AQI change
-          renderDailyRecommendations();
-          // Listen for AQI changes
-          document.addEventListener('aqi:changed', renderDailyRecommendations);
+          try { renderDailyRecommendations(); } catch(e) { try { console.warn('Initial recommendations render failed', e); } catch(e){} }
+          // Listen for AQI changes (event may provide detail.aqi)
+          document.addEventListener('aqi:changed', (ev) => {
+              const aqiDetail = ev && ev.detail && ev.detail.aqi != null ? Number(ev.detail.aqi) : null;
+              try { renderDailyRecommendations(aqiDetail); } catch(e) { console.warn('renderDailyRecommendations failed on aqi:changed', e); }
+          });
+          // Also listen to storage events for nearest_station_aqi updates (other tabs or map flow)
+          window.addEventListener('storage', (ev) => {
+              if (!ev) return;
+              if (ev.key === 'nearest_station_aqi') {
+                  const val = ev.newValue;
+                  const v = (val != null && val !== '' && !isNaN(Number(val))) ? Number(val) : null;
+                  try { renderDailyRecommendations(v); } catch(e) { console.warn('renderDailyRecommendations failed on storage event', e); }
+              }
+          });
           // Optionally, poll for AQI changes if needed
-          setInterval(renderDailyRecommendations, 30000); // update every 30s
+          setInterval(() => { try { renderDailyRecommendations(); } catch(e){} }, 30000); // update every 30s
   });
 
   // SEGUNDO INICIALIZADOR PARA LÓGICA DE PERFIL, MAPA Y RECOMENDACIONES
@@ -347,6 +422,8 @@
         content: `<p>You can take simple steps to protect yourself from air pollution, especially on high-AQI days:</p><ul><li><strong>Check the daily AQI forecast</strong> in your area to plan your activities.</li><li><strong>Limit strenuous outdoor exercise</strong> when air quality is poor.</li><li>Keep windows closed on high-pollution days and use <strong>air purifiers with HEPA filters</strong> indoors.</li><li>Consider wearing a well-fitting mask (like an N95) if you need to be outside for extended periods in unhealthy air.</li></ul>`
     }
 };
+    // expose as global fallback so other modules (carousel wiring) can reuse these
+    try { window.modalData = modalData; } catch(e) {}
 
     let activeCard = null;
 
@@ -423,57 +500,41 @@
     const modalBody = document.getElementById('modal-body');
     const closeBtn = document.getElementById('modal-close-btn');
     const carouselCards = document.querySelectorAll('.info-card');
-    if (!modalOverlay || carouselCards.length === 0) return;
-    
-   
-const contaminantsData = {
-    pm25: {
-        title: 'Particulate Matter (PM2.5)',
-        description: 'Microscopic particles less than 2.5 micrometers in diameter, about 1/30th the width of a human hair. Because they are so small and light, they can stay in the air for longer periods and can penetrate deep into the lungs and even enter the bloodstream.',
-        meaning: 'The WHO guideline for annual average exposure is 5 µg/m³. Any level above this increases the risk of respiratory and cardiovascular diseases. Consistent values above 12 µg/m³ are often considered unhealthy for sensitive groups.',
-        sources: 'Primarily from combustion sources like vehicle exhaust, power plants, industrial emissions, wildfires, and even indoor activities like cooking and burning candles.',
-        image: '2.5PM.jpg'
-    },
-    pm10: {
-        title: 'Particulate Matter (PM10)',
-        description: 'Inhalable coarse particles with a diameter between 2.5 and 10 micrometers. They are smaller than a strand of hair but larger than PM2.5. They can irritate the eyes, nose, and throat and can worsen conditions like asthma and bronchitis.',
-        meaning: 'The WHO considers an annual average of 15 µg/m³ to be the guideline limit. Short-term spikes above 50 µg/m³ can cause significant respiratory issues, especially for people with pre-existing conditions.',
-        sources: 'Generated from mechanical processes like road dust kicked up by vehicles, construction sites, landfills, and agriculture. Also includes natural sources like pollen and mold spores.',
-        image: '10PM.jpg'
-    },
-    co: {
-        title: 'Carbon Monoxide (CO)',
-        description: 'A colorless, odorless, and tasteless gas often called the "silent killer." It is highly toxic because it reduces the ability of blood to carry oxygen to the body\'s organs and tissues.',
-        meaning: 'Outdoor levels are typically low. The health standard is usually around 9 ppm (9,000 ppb) over 8 hours. Any sustained indoor concentration is a serious concern, as it points to faulty fuel-burning appliances.',
-        sources: 'Results from the incomplete combustion of carbon-containing fuels. Common sources include vehicle exhaust, industrial processes, and malfunctioning residential appliances like furnaces, water heaters, and stoves.',
-        image: 'CO.jpg'
-    },
-    so2: {
-        title: 'Sulfur Dioxide (SO₂)',
-        description: 'A colorless, highly reactive gas with a sharp, pungent odor similar to a struck match. It can irritate the skin and mucous membranes of the eyes, nose, and throat, and particularly affects the respiratory system.',
-        meaning: 'Even short-term exposure to levels around 75 ppb can cause significant bronchoconstriction in people with asthma. The WHO guideline for a 24-hour period is about 15 ppb.',
-        sources: 'The largest source is the burning of fossil fuels (containing sulfur) by power plants and other industrial facilities. Other sources include industrial smelters and volcanic eruptions.',
-        image: 'SO2.jpg'
-    },
-    no2: {
-        title: 'Nitrogen Dioxide (NO₂)',
-        description: 'A reddish-brown gas with a sharp, biting odor. It is a major contributor to urban haze and a precursor to both ozone and acid rain. It can aggravate respiratory diseases, particularly asthma, leading to coughing, wheezing, or difficulty breathing.',
-        meaning: 'The WHO guideline for annual average exposure is about 5 ppb (10 µg/m³). Levels often spike near heavy traffic, and concentrations above 100 ppb can cause significant respiratory distress.',
-        sources: 'Emitted from high-temperature combustion processes, primarily from car, truck, and bus engines, as well as power plants and industrial boilers.',
-        image: 'NO2.jpg'
-    },
-    o3: {
-        title: 'Ground-Level Ozone (O₃)',
-        description: 'Unlike the protective ozone layer in the stratosphere, ground-level ozone is a harmful pollutant and the main component of smog. It is not emitted directly but is formed by chemical reactions in the atmosphere.',
-        meaning: 'Often called a "sunburn for your lungs," it can cause chest pain, coughing, and throat irritation. Levels above 70 ppb are considered unhealthy for sensitive groups, and prolonged exposure can damage the lungs.',
-        sources: 'It is a secondary pollutant, created when nitrogen oxides (NOx) and volatile organic compounds (VOCs) react in the presence of sunlight and heat. This is why ozone levels are highest on hot, sunny afternoons.',
-        image: 'OZONO.jpg'
+    if (!modalOverlay || !modalBody || carouselCards.length === 0) return;
+
+    // Try to find HTML content fragments in the page for a given modal id.
+    // Search order:
+    //  1) [data-info-id="<id>"]
+    //  2) .info-modal or .info-modal-content elements with data-id/data-info
+    //  3) #info-modal-<id>
+    //  4) fallback to window.modalData (JS-provided mapping)
+    function findModalContentHtml(id) {
+        if (!id) return null;
+        try {
+            // exact attribute match
+            let el = document.querySelector(`[data-info-id="${id}"]`);
+            if (el) return el.innerHTML;
+            // elements using common class names with data attributes
+            el = document.querySelector(`.info-modal[data-id="${id}"], .info-modal[data-info="${id}"], .info-modal-content[data-id="${id}"], .info-modal-content[data-info="${id}"]`);
+            if (el) return el.innerHTML;
+            // id-based fragment
+            el = document.getElementById('info-modal-' + id);
+            if (el) return el.innerHTML;
+        } catch (e) {
+            // ignore selector errors
+        }
+        // fallback to JS-provided modalData (exposed as window.modalData)
+        try {
+            const md = (window && window.modalData) ? window.modalData[id] : null;
+            if (md) return `<h2>${md.title}</h2>${md.content}`;
+        } catch (e) {}
+        return null;
     }
 
     function openModal(id) {
-        const data = modalData[id];
-        if (!data) return;
-        modalBody.innerHTML = `<h2>${data.title}</h2>${data.content}`;
+        const html = findModalContentHtml(id);
+        if (!html) return;
+        modalBody.innerHTML = html;
         modalOverlay.classList.add('visible');
         document.body.classList.add('modal-open');
     }
@@ -909,12 +970,24 @@ const contaminantsData = {
             // persist nearest station AQI so other pages (Home) can read it
             try {
                 if (stationAqi != null && !isNaN(Number(stationAqi))) {
-                    localStorage.setItem('nearest_station_aqi', String(Math.round(stationAqi)));
-                    // also persist station name so Home can display it
-                    try { if (best && best.station_id) localStorage.setItem('nearest_station_name', String(best.station_id)); } catch (e) {}
-                    // Persist the full station object so other pages can read pollutant values
-                    try { localStorage.setItem('nearest_station_data', JSON.stringify(best)); } catch(e) {}
-                    document.dispatchEvent(new CustomEvent('aqi:changed', { detail: { aqi: Math.round(stationAqi), stationName: best && best.station_id ? best.station_id : null, station: best } }));
+                    // If a persistent lock exists and differs from this candidate, skip overwriting
+                    try {
+                        const persistedLock = localStorage.getItem('nearest_station_lock');
+                        const sig = (best && best.station_id) ? String(best.station_id) : ((best && best.lat != null && best.lon != null) ? `${best.lat},${best.lon}` : null);
+                        if (persistedLock && sig && persistedLock !== sig) {
+                            // Do not overwrite authoritative selection
+                        } else {
+                            localStorage.setItem('nearest_station_aqi', String(Math.round(stationAqi)));
+                            // also persist station name so Home can display it
+                            try { if (best && best.station_id) localStorage.setItem('nearest_station_name', String(best.station_id)); } catch (e) {}
+                            // Persist the full station object so other pages can read pollutant values
+                            try { localStorage.setItem('nearest_station_data', JSON.stringify(best)); } catch(e) {}
+                            document.dispatchEvent(new CustomEvent('aqi:changed', { detail: { aqi: Math.round(stationAqi), stationName: best && best.station_id ? best.station_id : null, station: best } }));
+                        }
+                    } catch(e) {
+                        // fallback: if lock check fails, persist normally
+                        try { localStorage.setItem('nearest_station_aqi', String(Math.round(stationAqi))); } catch(e){}
+                    }
                 }
             } catch (e) {}
             return best;
@@ -1543,6 +1616,62 @@ const contaminantsData = {
 
     refreshProfileState();
   }
+  
+    /**
+     * MÓDULO: Inicializador de la página de recomendaciones (cards interactivos)
+     */
+    function initRecommendationsModule() {
+        try {
+            const cards = document.querySelectorAll('.recommendation-card');
+            if (!cards || cards.length === 0) return;
+            // Ensure keyboard accessibility and attach listeners (prefer addEventListener over inline onclick)
+            cards.forEach(card => {
+                // make focusable
+                try { card.tabIndex = 0; } catch (e) {}
+                // remove possible inline onclick to avoid double-calls
+                try { if (card.getAttribute('onclick')) card.removeAttribute('onclick'); } catch (e) {}
+                card.addEventListener('click', () => toggleRecCard(card));
+                card.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        toggleRecCard(card);
+                    }
+                });
+            });
+        } catch (e) {
+            console.warn('initRecommendationsModule failed', e);
+        }
+    }
+
+    // Expose a global handler so inline onclick attributes still work.
+    window.toggleRecCard = function(cardEl) {
+        try {
+            if (!cardEl || !(cardEl instanceof Element)) return;
+            const details = cardEl.querySelector('.rec-details');
+            if (!details) return;
+            const isOpen = cardEl.classList.contains('rec-open') || details.style.display === 'block';
+            // Close any other open card for a mutually exclusive UI
+            document.querySelectorAll('.recommendation-card.rec-open').forEach(c => {
+                if (c !== cardEl) {
+                    c.classList.remove('rec-open');
+                    const d = c.querySelector('.rec-details'); if (d) d.style.display = 'none';
+                }
+            });
+            if (isOpen) {
+                cardEl.classList.remove('rec-open');
+                details.style.display = 'none';
+                try { cardEl.setAttribute('aria-expanded', 'false'); } catch(e){}
+            } else {
+                cardEl.classList.add('rec-open');
+                details.style.display = 'block';
+                try { cardEl.setAttribute('aria-expanded', 'true'); } catch(e){}
+                // Smooth scroll into view if needed
+                try { cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){}
+            }
+        } catch (err) {
+            console.warn('toggleRecCard error', err);
+        }
+    };
    // Wire 'Edit details' in Health to open the full register modal (same form used for profile edit)
     const editInlineBtn = document.getElementById('edit-inline-btn');
     if (editInlineBtn) {
@@ -1592,7 +1721,7 @@ const contaminantsData = {
             e.preventDefault();
             try { localStorage.removeItem(PROFILE_KEY); localStorage.removeItem(HEALTH_KEY); } catch(e){}
             // Also clear any chatbot aqi or related items used by recs
-            try { localStorage.removeItem('chatbot_aqi_value'); localStorage.removeItem('nearest_station_aqi'); localStorage.removeItem('nearest_station_name'); } catch(e){}
+            try { localStorage.removeItem('chatbot_aqi_value'); localStorage.removeItem('nearest_station_aqi'); localStorage.removeItem('nearest_station_name'); localStorage.removeItem('nearest_station_lock'); } catch(e){}
             // Reset UI
             refreshProfileState();
             // Show register prompt again
@@ -1611,6 +1740,11 @@ const contaminantsData = {
     }
 
     function getCurrentAqi() {
+        // Priority: persisted nearest_station_aqi -> DOM element -> null
+        try {
+            const persisted = localStorage.getItem('nearest_station_aqi');
+            if (persisted != null && persisted !== '' && !isNaN(Number(persisted))) return Number(persisted);
+        } catch (e) {}
         const el = document.getElementById('current-aqi-value');
         if (!el) return null;
         const v = parseInt(el.textContent);
@@ -1709,7 +1843,8 @@ const contaminantsData = {
         recs.forEach(r => {
             const card = document.createElement('div');
             card.className = 'rec-card';
-            card.innerHTML = `<h4>${r.title}</h4><p>${r.text}</p><div class="rec-action"><span class="rec-badge">${r.badge}</span><button class="action-button-transparent small-button">View details</button></div>`;
+            // removed 'View details' button per request
+            card.innerHTML = `<h4>${r.title}</h4><p>${r.text}</p><div class="rec-action"><span class="rec-badge">${r.badge}</span></div>`;
             container.appendChild(card);
         });
     }
@@ -1766,6 +1901,24 @@ const contaminantsData = {
             mo.observe(aqiEl, { childList: true, characterData: true, subtree: true });
         }
 
+        // Populate current AQI from persisted nearest station immediately if available
+        try {
+            const persisted = localStorage.getItem('nearest_station_aqi');
+            if (persisted != null && persisted !== '' && !isNaN(Number(persisted))) {
+                const el = document.getElementById('current-aqi-value'); if (el) el.textContent = String(Number(persisted));
+            }
+        } catch (e) {}
+
+        // Listen for global aqi:changed events (dispatched by map/nearest-station flow)
+        document.addEventListener('aqi:changed', (ev) => {
+            try { const aqi = ev && ev.detail && ev.detail.aqi != null ? Number(ev.detail.aqi) : null; if (aqi != null) setTimeout(refreshRecommendationsUI, 60); } catch(e){}
+        });
+
+        // If nearest_station_aqi changes via storage (other tab), refresh
+        window.addEventListener('storage', (ev) => {
+            try { if (ev && ev.key === 'nearest_station_aqi') setTimeout(refreshRecommendationsUI, 60); } catch(e){}
+        });
+
         // Also refresh on load
         setTimeout(refreshRecommendationsUI, 180);
        // Refresh when profile changes or user signs out
@@ -1776,10 +1929,12 @@ const contaminantsData = {
    * MÓDULO: Asistente Virtual (Chatbot) - Adaptado del sketch de React
    */
   function initChatbotModule() {
-    // ¡REEMPLAZA ESTO con la URL de tu Space!
-    const API_URL = "https://gabziag03-v4-nsac-2025.hf.space"; 
+    
+    const API_URL = "https://gabziag03-v4-nsac-2025.hf.space";
+    
+    const SUPABASE_URL = 'https://kqegcdizoltciupsozco.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtxZWdjZGl6b2x0Y2l1cHNvemNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNzE2MzYsImV4cCI6MjA3NDk0NzYzNn0.9PKz0IAC_3_tgF6q-n8ruckfLSt5XOcGDVzHSTTZsaI';
 
-    // Referencias a elementos del DOM
     const chatWindow = $('#chat-window');
     const chatInput = $('#chat-input');
     const sendBtn = $('#send-btn');
@@ -1789,42 +1944,174 @@ const contaminantsData = {
 
     if (!chatWindow || !chatInput || !sendBtn || !chatInputForm) return;
 
-    // Estado local
     let chatHistory = [];
     let aqiData = null;
     let isLoading = false;
-    
-    // --- Lógica del Sketch de React (Adaptada) ---
-    
-    // Rangos y funciones para generación aleatoria
-    const FEATURE_RANGES = {
-        'lat': [19.884490, 62.141694], 'lon': [-156.877217, -69.036592], 'mes': [1, 12], 
-        'dia_semana': [0, 6], 'o3_lag1': [0.001000, 0.050000], 'o3_lag3': [0.001000, 0.050000],
-        'o3_lag7': [0.001000, 0.050000], 'pm25_lag1': [-0.150000, 24.509960],
-        'pm25_lag3': [-0.150000, 24.509960], 'pm25_lag7': [-0.150000, 24.509960],
-    };
-    const generateRandomValue = (min, max, isInteger = false) => {
-        const value = Math.random() * (max - min) + min;
-        return isInteger ? Math.floor(value) : parseFloat(value.toFixed(6)); 
-    };
-    const generateRandomFeatures = () => {
-        const newFeatures = {};
-        for (const key in FEATURE_RANGES) {
-            const [min, max] = FEATURE_RANGES[key];
-            const isInteger = key === 'mes' || key === 'dia_semana';
-            newFeatures[key] = generateRandomValue(min, max, isInteger);
-        }
-        return newFeatures;
-    };
+    let userLocation = null;
 
-    // Función auxiliar para scroll
-    const scrollToBottom = () => {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    };
-    
-    // Mapeo de categorías a clases CSS para colores
+    async function getUserLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation not supported'));
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => resolve({ lat: position.coords.latitude, lon: position.coords.longitude }),
+                (error) => reject(error),
+                { timeout: 10000, enableHighAccuracy: true }
+            );
+        });
+    }
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+        const toRad = v => v * Math.PI / 180;
+        const R = 6371e3;
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δφ = toRad(lat2 - lat1), Δλ = toRad(lon2 - lon1);
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    async function getStationHistoricalData(stationId) {
+        try {
+            const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/measurement_rt?select=*&station_id=eq.${stationId}&ts=gte.${fourteenDaysAgo}&order=ts.desc&limit=200`,
+                { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+            );
+
+            if (!response.ok) throw new Error('Error fetching historical data');
+            const data = await response.json();
+            if (!data || data.length === 0) throw new Error('No historical data available');
+
+            const dailyData = {};
+            data.forEach(row => {
+                const date = new Date(row.ts).toISOString().split('T')[0];
+                if (!dailyData[date]) dailyData[date] = { o3: [], pm25: [] };
+                if (row.o3 != null && !isNaN(row.o3)) dailyData[date].o3.push(Number(row.o3));
+                if (row.pm25 != null && !isNaN(row.pm25)) dailyData[date].pm25.push(Number(row.pm25));
+            });
+
+            const sortedDays = Object.keys(dailyData).sort().reverse();
+            const dailyAverages = sortedDays.map(date => ({
+                date,
+                o3: dailyData[date].o3.length > 0 ? dailyData[date].o3.reduce((a,b) => a+b, 0) / dailyData[date].o3.length : null,
+                pm25: dailyData[date].pm25.length > 0 ? dailyData[date].pm25.reduce((a,b) => a+b, 0) / dailyData[date].pm25.length : null
+            })).filter(day => day.o3 !== null || day.pm25 !== null);
+
+            if (dailyAverages.length === 0) throw new Error('No valid daily data available');
+
+            const lag1 = dailyAverages[0];
+            const lag3 = dailyAverages[Math.min(2, dailyAverages.length - 1)];
+            const lag7 = dailyAverages[Math.min(6, dailyAverages.length - 1)];
+
+            console.log('Historical data:', { lag1_date: lag1.date, lag3_date: lag3.date, lag7_date: lag7.date, total_days: dailyAverages.length });
+            console.log('Historical data retrieved:', {
+            lag1_date: lag1.date,
+            lag3_date: lag3.date,
+            lag7_date: lag7.date,
+            o3_lag1: historicalData.o3_lag1,
+            pm25_lag1: historicalData.pm25_lag1,
+            total_days: dailyAverages.length
+            });
+            return {
+                o3_lag1: lag1?.o3 || 0.030, pm25_lag1: lag1?.pm25 || 10.0,
+                o3_lag3: lag3?.o3 || 0.029, pm25_lag3: lag3?.pm25 || 9.8,
+                o3_lag7: lag7?.o3 || 0.028, pm25_lag7: lag7?.pm25 || 9.5,
+                lag1_date: lag1.date
+            };
+        } catch (error) {
+            console.error('Error getting historical data:', error);
+            return { o3_lag1: 0.030, pm25_lag1: 10.0, o3_lag3: 0.029, pm25_lag3: 9.8, o3_lag7: 0.028, pm25_lag7: 9.5 };
+        }
+    }
+
+    async function getRealAQIData() {
+        try {
+            try {
+                userLocation = await getUserLocation();
+            } catch (err) {
+                console.warn('Could not get user location, using default:', err);
+                userLocation = { lat: 19.4326, lon: -99.1332 };
+            }
+
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const response = await fetch(
+                `${SUPABASE_URL}/rest/v1/measurement_rt?select=*&ts=gte.${yesterday}&order=ts.desc&limit=500`,
+                { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+            );
+
+            if (!response.ok) throw new Error('Error fetching AQI data');
+            const data = await response.json();
+            if (!data || data.length === 0) throw new Error('No AQI data available');
+
+            const stationMap = new Map();
+            data.forEach(row => { if (!stationMap.has(row.station_id)) stationMap.set(row.station_id, row); });
+            const stations = Array.from(stationMap.values());
+
+            let nearestStation = null, minDistance = Infinity;
+            stations.forEach(station => {
+                if (!station.lat || !station.lon) return;
+                const distance = haversineDistance(userLocation.lat, userLocation.lon, Number(station.lat), Number(station.lon));
+                if (distance < minDistance) { minDistance = distance; nearestStation = station; }
+            });
+
+            if (!nearestStation) throw new Error('No nearby stations found');
+
+            const historicalData = await getStationHistoricalData(nearestStation.station_id);
+
+            const features = {
+                lat: Number(nearestStation.lat),
+                lon: Number(nearestStation.lon),
+                mes: new Date().getMonth() + 1,
+                dia_semana: new Date().getDay(),
+                o3_lag1: historicalData.o3_lag1,
+                o3_lag3: historicalData.o3_lag3,
+                o3_lag7: historicalData.o3_lag7,
+                pm25_lag1: historicalData.pm25_lag1,
+                pm25_lag3: historicalData.pm25_lag3,
+                pm25_lag7: historicalData.pm25_lag7
+            };
+
+            const chatResponse = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ features })
+            });
+
+            if (!chatResponse.ok) {
+                const errorData = await chatResponse.json();
+                throw new Error(errorData.error || 'Error calling chat API');
+            }
+
+            const chatData = await chatResponse.json();
+
+            try {
+                localStorage.setItem('nearest_station_aqi', String(chatData.aqi_data.aqi_actual));
+                localStorage.setItem('nearest_station_name', nearestStation.station_id || 'Unknown');
+                localStorage.setItem('nearest_station_data', JSON.stringify(nearestStation));
+            } catch (e) {}
+
+            return {
+                actual: { aqi: chatData.aqi_data.aqi_actual, categoria: chatData.aqi_data.categoria_actual },
+                pronosticado: { aqi: chatData.aqi_data.aqi_pronosticado, categoria: chatData.aqi_data.categoria_pronosticada },
+                dominante: chatData.aqi_data.dominante,
+                stationName: nearestStation.station_id,
+                distance: (minDistance / 1000).toFixed(2) + ' km',
+                assistant_message: chatData.assistant_message,
+                history: chatData.history
+            };
+        } catch (error) {
+            console.error('Error getting real AQI data:', error);
+            throw error;
+        }
+    }
+
+    const scrollToBottom = () => { chatWindow.scrollTop = chatWindow.scrollHeight; };
+
     const getAqiClass = (category) => {
-        if (!category) return 'bg-gray-400';
+        if (!category) return 'aqi-color-moderate';
         const lower = category.toLowerCase();
         if (lower.includes('bueno') || lower.includes('good')) return 'aqi-color-good';
         if (lower.includes('moderado') || lower.includes('moderate')) return 'aqi-color-moderate';
@@ -1832,140 +2119,118 @@ const contaminantsData = {
         if (lower.includes('insalubre') && !lower.includes('muy')) return 'aqi-color-unhealthy';
         if (lower.includes('muy insalubre') || lower.includes('very unhealthy')) return 'aqi-color-very-unhealthy';
         if (lower.includes('peligroso') || lower.includes('hazardous')) return 'aqi-color-hazardous';
-        return 'bg-gray-400';
+        return 'aqi-color-moderate';
     };
 
-    // Renderizado del historial de chat, excluyendo mensajes internos
     const renderChat = (history) => {
         const SYSTEM_PROMPT_START = "Eres un asistente especializado en calidad del aire.";
         const SYSTEM_ACK_TEXT = "Entendido. Estoy listo para asumir el rol.";
         const GROUNDING_PROMPT_START = "El AQI Actual es";
-        
+
         const displayHistory = history.filter(msg => {
-            const text = msg.parts[0]?.text?.trim() || ''; 
-            // Ocultar mensajes internos del sistema
-            if (msg.role === 'user' && text.includes(SYSTEM_PROMPT_START)) return false; 
-            if (msg.role === 'model' && text === SYSTEM_ACK_TEXT) return false; 
+            const text = msg.parts[0]?.text?.trim() || '';
+            if (msg.role === 'user' && text.includes(SYSTEM_PROMPT_START)) return false;
+            if (msg.role === 'model' && text === SYSTEM_ACK_TEXT) return false;
             if (msg.role === 'user' && text.startsWith(GROUNDING_PROMPT_START)) return false;
             return true;
         });
-        
+
         chatWindow.innerHTML = displayHistory.map(msg => {
             const text = msg.parts[0].text;
             const roleClass = msg.role === 'user' ? 'user-message' : 'bot-message';
             const alignment = msg.role === 'user' ? 'justify-end' : 'justify-start';
             return `<div class="message ${alignment}"><div class="${roleClass}"><p>${text}</p></div></div>`;
         }).join('');
-        
+
         scrollToBottom();
     };
 
-    // Renderizado del AQI Dual
     const renderAqiData = (data) => {
         if (!data) return;
-        
         aqiDisplay.style.display = 'block';
 
-        // AQI Actual
         const actualCard = $('#aqi-actual-card');
         actualCard.className = `aqi-card ${getAqiClass(data.actual.categoria)}`;
         $('#aqi-actual-value').textContent = data.actual.aqi;
         $('#aqi-actual-category').textContent = data.actual.categoria;
-        
-        // AQI Pronosticado
+
         const forecastCard = $('#aqi-forecast-card');
         forecastCard.className = `aqi-card ${getAqiClass(data.pronosticado.categoria)}`;
         $('#aqi-forecast-value').textContent = data.pronosticado.aqi;
         $('#aqi-forecast-category').textContent = data.pronosticado.categoria;
-        
-        // Contaminante dominante
+
         $('#dominant-pollutant span').textContent = data.dominante;
-        
-        // Almacenar AQI actual en localStorage para el módulo de recomendaciones
+
+        try {
+            const recAqiEl = document.getElementById('current-aqi-value');
+            const recEmojiEl = document.getElementById('current-aqi-emoji');
+            if (recAqiEl) recAqiEl.textContent = data.actual.aqi;
+            if (recEmojiEl) {
+                const emojis = ['🤩', '🙂', '😷', '😟', '😵', '☠️'];
+                const idx = Math.min(5, Math.floor(data.actual.aqi / 50));
+                recEmojiEl.textContent = emojis[idx];
+            }
+        } catch (e) {}
+
+        if (data.stationName) {
+            const titleEl = $('#chat-title');
+            const cleanName = data.stationName.split(':')[1]?.replace(/_/g, ' ') || data.stationName;
+            if (titleEl) titleEl.innerHTML = `AQI Assistant <i class="fas fa-robot"></i><br><small style="font-size:0.7rem;opacity:0.85;font-weight:400;">Station: ${cleanName} (${data.distance})</small>`;
+        }
+
         try {
             localStorage.setItem('chatbot_aqi_value', data.actual.aqi);
-            // Si el módulo de recomendaciones existe en esta página, forzar un refresh
-            const aqiEl = document.getElementById('current-aqi-value');
-            if (aqiEl) aqiEl.textContent = data.actual.aqi;
-        } catch(e) { /* ignore */ }
+            document.dispatchEvent(new CustomEvent('aqi:changed', { detail: { aqi: data.actual.aqi, stationName: data.stationName } }));
+        } catch (e) {}
     };
 
-    // Actualiza el estado de carga y UI
     const updateLoadingState = (loading, errorText = '') => {
         isLoading = loading;
         sendBtn.disabled = loading || !chatInput.value.trim();
         chatInput.placeholder = loading ? "Waiting for response..." : "Write your question or comment...";
         chatInput.disabled = loading;
-        
-        statusArea.innerHTML = ''; // Limpiar errores
-        
+        statusArea.innerHTML = '';
+
         if (loading) {
-            statusArea.innerHTML = `<div class="loader"></div><p style="text-align:center; color:#666;">Generating data and calculating forecast...</p>`;
+            statusArea.innerHTML = `<div class="loader"></div><p style="text-align:center; color:#666;margin-top:12px;">Getting real-time AQI from nearest station...</p>`;
             chatInputForm.style.display = 'none';
         } else {
             chatInputForm.style.display = 'flex';
             if (errorText) {
-                statusArea.innerHTML = `<div class="p-3 mb-4 text-sm text-red-700 bg-red-100 bg-opacity-70 rounded-lg" role="alert"><span style="font-weight: 600;">Error:</span> ${errorText} <button id="retry-btn" class="underline ml-2">Retry</button></div>`;
+                statusArea.innerHTML = `<div style="padding:12px;margin-bottom:16px;background:rgba(255,0,0,0.1);border-left:4px solid #ff0000;border-radius:6px;"><strong style="color:#cc0000;">Error:</strong> <span style="color:#333;">${errorText}</span> <button id="retry-btn" style="margin-left:8px;text-decoration:underline;background:none;border:none;color:#667eea;cursor:pointer;">Retry</button></div>`;
                 $('#retry-btn')?.addEventListener('click', handleInitialSubmit);
                 chatInputForm.style.display = 'none';
             }
         }
-
         chatWindow.style.display = aqiData && !loading ? 'block' : 'none';
     };
 
-    // Maneja el inicio de la conversación (Grounding)
     const handleInitialSubmit = async () => {
         aqiData = null;
         chatHistory = [];
         updateLoadingState(true);
 
-        const newRandomFeatures = generateRandomFeatures();
-        
         try {
-            const response = await fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ features: newRandomFeatures }) 
-            });
-            
-            if (!response.ok) { 
-                const errorData = await response.json(); 
-                throw new Error(errorData.error || `Unknown error: ${response.status}`); 
-            }
-            
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            aqiData = {
-                actual: { aqi: data.aqi_data.aqi_actual, categoria: data.aqi_data.categoria_actual },
-                pronosticado: { aqi: data.aqi_data.aqi_pronosticado, categoria: data.aqi_data.categoria_pronosticada },
-                dominante: data.aqi_data.dominante
-            };
-            chatHistory = data.history; 
-            
+            const realAQI = await getRealAQIData();
+            aqiData = realAQI;
+            chatHistory = realAQI.history || [];
             renderAqiData(aqiData);
             renderChat(chatHistory);
-
         } catch (err) {
-            console.error('Catch error:', err);
-            updateLoadingState(false, `Error starting conversation: ${err.message}`);
-            return; 
+            console.error('Error:', err);
+            updateLoadingState(false, `${err.message}. Make sure location permission is enabled.`);
+            return;
         } finally {
             updateLoadingState(false);
         }
     };
 
-    // Maneja la continuación de la conversación
     const handleChatSubmit = async (e) => {
         e.preventDefault();
         const userInput = chatInput.value.trim();
         if (!userInput || isLoading) return;
-        
-        const userMsgPayload = userInput;
-        
-        // Agregar mensaje de usuario temporal
-        const tempUserMsg = { role: 'user', parts: [{ text: userMsgPayload }] };
+
+        const tempUserMsg = { role: 'user', parts: [{ text: userInput }] };
         const tempHistory = [...chatHistory, tempUserMsg];
         chatInput.value = "";
         renderChat(tempHistory);
@@ -1975,42 +2240,32 @@ const contaminantsData = {
             const response = await fetch(`${API_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    history: chatHistory, // Envía el historial anterior (sin el mensaje temporal)
-                    user_message: userMsgPayload 
-                })
+                body: JSON.stringify({ history: chatHistory, user_message: userInput })
             });
-            
-            if (!response.ok) { 
-                const errorData = await response.json(); 
+
+            if (!response.ok) {
+                const errorData = await response.json();
                 throw new Error(errorData.error || `Unknown error: ${response.status}`);
             }
-            
+
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
-            chatHistory = data.history; // Reemplazar con el historial completo y correcto
-            renderChat(chatHistory);
 
+            chatHistory = data.history;
+            renderChat(chatHistory);
         } catch (err) {
-            const errorMessage = `Error in conversation: ${err.message}`;
-            alert(errorMessage);
-            console.error(errorMessage);
-            // Si falla, restaurar historial original y agregar un mensaje de error visual
-            chatHistory = tempHistory; 
+            alert(`Error: ${err.message}`);
+            console.error(err);
+            chatHistory = tempHistory;
             renderChat(chatHistory);
         } finally {
             updateLoadingState(false);
         }
     };
 
-    // Event Listeners
     chatInputForm.addEventListener('submit', handleChatSubmit);
-    chatInput.addEventListener('input', () => {
-        sendBtn.disabled = isLoading || !chatInput.value.trim();
-    });
+    chatInput.addEventListener('input', () => { sendBtn.disabled = isLoading || !chatInput.value.trim(); });
 
-    // Inicialización: Llamar handleInitialSubmit al cargar el módulo
     handleInitialSubmit();
   }
   
@@ -2077,38 +2332,69 @@ const contaminantsData = {
   // run once at load in case data is already present
   try { updateHomeContaminantCards(); } catch(e) {}
 
-  /* ===== PERSONALIZED RECOMMENDATIONS MODULE - BEGIN (copy/paste friendly) ===== */
-  // ... [código de recomendaciones existente] ...
-  
-  // Modificación para que las recomendaciones lean el AQI del chatbot si existe.
-  (function(){
-      // ... [código existente] ...
-      function getCurrentAqi() {
-          const el = document.getElementById('current-aqi-value');
-          // NUEVO: Intentar leer de localStorage (chatbot) si el elemento no tiene valor
-          let v = null;
-          if (el) v = parseInt(el.textContent);
-          
-          if (isNaN(v) || v == null) {
-              try {
-                  const chatAqi = localStorage.getItem('chatbot_aqi_value');
-                  if (chatAqi && !isNaN(Number(chatAqi))) {
-                      v = Number(chatAqi);
-                      if (el) el.textContent = v; // Actualizar el elemento DOM si se encuentra
-                  }
-              } catch (e) {}
-          }
-          return isNaN(v) ? null : v;
-      }
-      // ... [código existente] ...
-  })();
-  /* ===== PERSONALIZED RECOMMENDATIONS MODULE - END ===== */
+    // (Duplicate recommendations helper removed to fix mismatched braces)
 })();
 
 /* ===== PERSONALIZED RECOMMENDATIONS MODULE - END ===== */
 
   
 
+})();
+
+// --- Small helper: wire carousel cards to the info modal ---
+(function(){
+    try {
+        const modalOverlay = document.getElementById('info-modal-overlay');
+        const modalBody = document.getElementById('modal-body');
+        const modalClose = document.getElementById('modal-close-btn');
+        if (!modalOverlay || !modalBody) return;
+        // prefer fragments in the DOM (authoring: <div class="info-modal" data-info-id="...">...</div>)
+        function findFragmentHtml(id) {
+            try {
+                // 1) look for element with data-info-id matching id
+                const byData = document.querySelector(`[data-info-id="${id}"]`);
+                if (byData) return byData.innerHTML;
+                // 2) look for .info-modal or .info-modal-content blocks with attribute data-id or data-info
+                const byClass = document.querySelector(`.info-modal[data-id="${id}"], .info-modal[data-info="${id}"], .info-modal-content[data-id="${id}"], .info-modal-content[data-info="${id}"]`);
+                if (byClass) return byClass.innerHTML;
+                // 3) look for id'ed fragments like #info-modal-<id>
+                const byId = document.getElementById(`info-modal-${id}`);
+                if (byId) return byId.innerHTML;
+            } catch(e) {}
+            return null;
+        }
+
+        function openModalFor(id) {
+            // try DOM fragments first
+            const frag = findFragmentHtml(id);
+            if (frag) {
+                modalBody.innerHTML = frag;
+            } else {
+                // fallback to global modalData if present
+                const globalMap = window.modalData || {};
+                const data = globalMap[id];
+                if (data && data.title) modalBody.innerHTML = `<h2>${data.title}</h2>${data.content || ''}`;
+                else modalBody.innerHTML = `<h2>${id}</h2><p>Content coming soon.</p>`;
+            }
+            modalOverlay.classList.add('visible');
+            document.body.classList.add('modal-open');
+        }
+
+        document.querySelectorAll('.carousel-card[data-modal-id]').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', (ev) => {
+                const id = card.getAttribute('data-modal-id');
+                if (id) openModalFor(id);
+            });
+            // keyboard accessibility
+            card.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); const id = card.getAttribute('data-modal-id'); if (id) openModalFor(id); } });
+            card.setAttribute('tabindex', '0');
+        });
+
+        if (modalClose) modalClose.addEventListener('click', () => { modalOverlay.classList.remove('visible'); document.body.classList.remove('modal-open'); });
+        modalOverlay.addEventListener('click', (ev) => { if (ev.target === modalOverlay) { modalOverlay.classList.remove('visible'); document.body.classList.remove('modal-open'); } });
+    } catch (e) { console.warn('carousel->modal wiring failed', e); }
+    
 })();
 
 

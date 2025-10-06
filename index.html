@@ -3,27 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Site Name | Home</title>
+  <title>MAIA (My Adaptive IntelligenceAdvisor) | Home</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Raleway:wght@700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/feather-icons"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header id="navbar">
-    <div class="logo">Site Name</div>
+  <div class="logo">MAIA (My Adaptive IntelligenceAdvisor)</div>
     <nav>
       <a href="index.html" class="active">Home</a>
       <a href="map.html">View Map</a>
+      <a href="map3d.html">MAP 3D</a>
+      <a href="notifications.html">Notifications</a>
+      <a href="graphics.html">Graphics</a>
       <a href="recommendations.html">My Recommendations</a>
       <a href="cuenta.html">Account</a>
     </nav>
   </header>
 
+
   <main>
     <section class="hero-section">
       <div class="particle-container" id="particle-container"></div>
       <div class="hero-content">
-        <h1 class="hero-title">Site Name</h1>
+  <h1 class="hero-title">MAIA (My Adaptive IntelligenceAdvisor)</h1>
         <p class="hero-subtitle">Intelligent environmental prediction for your day.</p>
       </div>
     </section>
@@ -40,7 +44,7 @@
             <span class="aqi-level" id="aqi-level-display">--</span>
           </div>
         </div>
-        <button class="details-btn">More Details Here</button>
+        
       </div>
       <div class="aq-right">
           <h3 class="recommendation-title">Daily Recommendations</h3>
@@ -115,7 +119,7 @@
   </main>
 
   <footer class="footer">
-    <p>© 2025 Site Name — All rights reserved.</p>
+  <p>© 2025 MAIA (My Adaptive IntelligenceAdvisor) — All rights reserved.</p>
   </footer>
 
   <div id="info-modal-overlay" class="modal-overlay">
@@ -127,6 +131,11 @@
   </div>
 
   <script src="script.js"></script>
+  <div class="insight-card" style="background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); grid-column: 1 / -1;">
+  <h3 style="margin-bottom: 20px; color: #1e293b;">Public Health Impact (Last 12 Months)</h3>
+  <div id="health-impact">Loading health impact analysis...</div>
+</div>
+
 </body>
 
 </html>

@@ -89,6 +89,34 @@ h1,h2,h3 { font-family: 'Raleway', sans-serif; }
 }
 #navbar nav a:hover { color: var(--color-primary); transform: translateY(-2px); }
 #navbar nav a.active { color: var(--color-primary); background: rgba(52, 230, 194, 0.1); }
+#navbar .logo { font-weight: 800; font-size: 1.05rem; color: var(--color-deep); }
+/* Stronger visible active state */
+#navbar nav a.active {
+    color: var(--color-primary);
+    background: rgba(52, 230, 194, 0.06);
+    box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+/* Ensure nav items collapse gracefully on small screens */
+@media (max-width: 700px) {
+    #navbar { padding: 10px 4%; height: auto; align-items: flex-start; flex-direction: column; gap: 8px; }
+    #navbar nav { display: flex; gap: 8px; flex-wrap: wrap; }
+ }
+
+/* Responsive logo: show short 'MAIA' on small screens, full name on larger */
+.logo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.logo::after { content: ''; }
+@media (max-width: 600px) {
+    /* Replace logo text visually on small screens */
+    .logo { font-size: 1rem; }
+    .logo[data-full]::before { content: 'MAIA'; display: inline; }
+    .logo[data-full] { font-weight: 800; }
+    .logo span.full-text { display: none; }
+}
+@media (min-width: 601px) {
+    .logo span.full-text { display: inline; }
+    .logo[data-full]::before { content: ''; }
+}
 
 
 /* ==============
@@ -777,7 +805,7 @@ body.modal-open {
     flex-direction: column;
     height: 100%;
 }
-}
+
 
 /* ------------------ Estilos del Perfil ------------------ */
 

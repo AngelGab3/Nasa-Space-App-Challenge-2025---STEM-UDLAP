@@ -3,16 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Site Name | My Recommendations</title>
+  <title>MAIA (My Adaptive IntelligenceAdvisor) | My Recommendations</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Raleway:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header id="navbar">
-    <div class="logo">Site Name</div>
+  <div class="logo">MAIA (My Adaptive IntelligenceAdvisor)</div>
     <nav>
         <a href="index.html">Home</a>
       <a href="index.html#mapa">View Map</a>
+      <a href="map3d.html">MAP 3D</a>
+      <a href="notifications.html">Notifications</a>
+      <a href="graphics.html">Graphics</a>
   <a href="recommendations.html" class="active">My Recommendations</a>
   <a href="cuenta.html">Account</a>
     </nav>
@@ -79,13 +82,13 @@
 
     <section class="info-panels fade-section">
      <!-- START PERSONALIZED RECOMMENDATIONS - BEGIN (copy/paste this block into another repo) -->
-      <div class="translucent-panel" id="personal-recommendations">
-        <h2>Consejos personalizados</h2>
+  <div class="translucent-panel" id="personal-recommendations">
+    <h2>Personalized Recommendations</h2>
   <p class="muted">Get recommendations tailored to your health profile and the air quality (AQI).</p>
 
         <!-- Small meta row: AQI display (populated by script) -->
         <div class="rec-meta">
-          <div class="rec-aqi">AQI actual: <strong id="current-aqi-value">--</strong> <span id="current-aqi-emoji"></span></div>
+          <div class="rec-aqi">Current AQI: <strong id="current-aqi-value">--</strong> <span id="current-aqi-emoji"></span></div>
           <div class="rec-location" id="rec-location" style="display:none;"></div>
         </div>
 
@@ -108,13 +111,13 @@
 
         <div id="aqi-dual-display" style="display:none; margin-bottom: 20px;">
           <div class="aqi-display-grid">
-              <div id="aqi-actual-card" class="aqi-card">
-                  <p class="aqi-label">AQI TODA</p>
+        <div id="aqi-actual-card" class="aqi-card">
+          <p class="aqi-label">AQI TODAY</p>
                   <div id="aqi-actual-value" class="aqi-value">--</div>
                   <div id="aqi-actual-category" class="aqi-category">--</div>
               </div>
               <div id="aqi-forecast-card" class="aqi-card">
-                  <p class="aqi-label">AQI FORECAST</p>
+          <p class="aqi-label">AQI TOMORROW</p>
                   <div id="aqi-forecast-value" class="aqi-value">--</div>
                   <div id="aqi-forecast-category" class="aqi-category">--</div>
               </div>
@@ -159,7 +162,7 @@
   </main>
 
   <footer class="footer">
-    <p>© 2025 Site Name — All rights reserved.</p>
+  <p>© 2025 MAIA (My Adaptive IntelligenceAdvisor) — All rights reserved.</p>
   </footer>
 
   <script src="script.js"></script>

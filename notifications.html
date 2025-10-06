@@ -1,9 +1,10 @@
-*Este es el html de correos* <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stations - Air Quality</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -12,7 +13,9 @@
             background: linear-gradient(to bottom, #e0e7ff, #f5f5f5);
             min-height: 100vh;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    /* Ensure content is visible below the fixed navbar */
+    body { padding-top: 84px; }
         
         h1 { 
             color: #1e293b; 
@@ -154,7 +157,20 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <header id="navbar">
+        <div class="logo">MAIA (My Adaptive IntelligenceAdvisor)</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="map.html">View Map</a>
+            <a href="map3d.html">MAP 3D</a>
+            <a href="notifications.html" class="active">Notifications</a>
+            <a href="graphics.html">Graphics</a>
+            <a href="recommendations.html">My Recommendations</a>
+            <a href="cuenta.html">Account</a>
+        </nav>
+    </header>
+
+        <div class="container">
         <h1>Air Quality Stations</h1>
         
         <div class="subscribe-box">
